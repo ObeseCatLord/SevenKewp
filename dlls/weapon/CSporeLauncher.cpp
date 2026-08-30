@@ -167,7 +167,7 @@ void CSporeLauncher::PrimaryAttack()
 		SendWeaponAnim(SPLAUNCHER_FIRE);
 		EMIT_SOUND(m_pPlayer->edict(), CHAN_WEAPON, "weapons/splauncher_fire.wav", VOL_NORM, ATTN_NORM);
 
-		Vector vecAngles = m_pPlayer->pev->v_angle + m_pPlayer->pev->punchangle;
+		Vector vecAngles = m_pPlayer->GetWeaponViewAngles();
 
 		UTIL_MakeVectors(vecAngles);
 
@@ -191,7 +191,7 @@ void CSporeLauncher::PrimaryAttack()
 		Vector sporeAngles = UTIL_VecToAngles(targetdir);
 		sporeAngles.x *= -1;
 		*/
-		Vector sporeAngles = m_pPlayer->pev->v_angle;
+		Vector sporeAngles = m_pPlayer->GetWeaponAngles();
 
 		CSpore::CreateSpore(vecSrc, sporeAngles, m_pPlayer, CSpore::SporeType::ROCKET, false, false);
 #endif
@@ -230,7 +230,7 @@ void CSporeLauncher::SecondaryAttack()
 		SendWeaponAnim(SPLAUNCHER_FIRE);
 		EMIT_SOUND(m_pPlayer->edict(), CHAN_WEAPON, "weapons/splauncher_fire.wav", VOL_NORM, ATTN_NORM);
 
-		Vector vecAngles = m_pPlayer->pev->v_angle + m_pPlayer->pev->punchangle;
+		Vector vecAngles = m_pPlayer->GetWeaponViewAngles();
 
 		UTIL_MakeVectors(vecAngles);
 
@@ -254,7 +254,7 @@ void CSporeLauncher::SecondaryAttack()
 		Vector sporeAngles = UTIL_VecToAngles(targetdir);
 		sporeAngles.x *= -1;
 		*/
-		Vector sporeAngles = m_pPlayer->pev->v_angle;
+		Vector sporeAngles = m_pPlayer->GetWeaponAngles();
 		Vector targetdir = gpGlobals->v_forward;
 
 		CSpore* pSpore = CSpore::CreateSpore(

@@ -433,7 +433,7 @@ void CTripmine::PrimaryAttack( void )
 	if (m_pPlayer->m_rgAmmo[m_iPrimaryAmmoType] <= 0)
 		return;
 
-	UTIL_MakeVectors( m_pPlayer->pev->v_angle + m_pPlayer->pev->punchangle );
+	UTIL_MakeVectors(m_pPlayer->GetWeaponViewAngles());
 	Vector vecSrc	 = m_pPlayer->GetGunPosition( );
 	Vector vecAiming = gpGlobals->v_forward;
 
@@ -527,7 +527,6 @@ void CTripmine::WeaponIdle( void )
 
 	SendWeaponAnim( iAnim );
 }
-
 
 
 

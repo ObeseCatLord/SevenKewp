@@ -156,7 +156,7 @@ void CHgun::PrimaryAttack()
 	}
 
 #ifndef CLIENT_DLL
-	UTIL_MakeVectors( m_pPlayer->pev->v_angle);
+	UTIL_MakeVectors(m_pPlayer->GetWeaponViewAngles());
 
 	Vector vecHead = m_pPlayer->GetGunPosition();
 	Vector vecSrc = vecHead + gpGlobals->v_forward * 16 + gpGlobals->v_right * 8 + gpGlobals->v_up * -12;
@@ -171,7 +171,7 @@ void CHgun::PrimaryAttack()
 	Vector hornetAngles = UTIL_VecToAngles(targetdir);
 	hornetAngles.x *= -1;
 	*/
-	Vector hornetAngles = m_pPlayer->pev->v_angle;
+	Vector hornetAngles = m_pPlayer->GetWeaponAngles();
 	Vector targetdir = gpGlobals->v_forward;
 
 	CBaseEntity *pHornet = CBaseEntity::Create( "hornet", vecSrc, hornetAngles, true, m_pPlayer->edict() );
@@ -235,7 +235,7 @@ void CHgun::SecondaryAttack( void )
 	Vector vecSrc;
 	Vector vecHead = m_pPlayer->GetGunPosition();
 	
-	UTIL_MakeVectors( m_pPlayer->pev->v_angle);
+	UTIL_MakeVectors(m_pPlayer->GetWeaponViewAngles());
 
 	/*
 	Vector vecSpread = VECTOR_CONE_3DEGREES;
@@ -293,7 +293,7 @@ void CHgun::SecondaryAttack( void )
 	Vector hornetAngles = UTIL_VecToAngles(targetdir);
 	hornetAngles.x *= -1;
 	*/
-	Vector hornetAngles = m_pPlayer->pev->v_angle;
+	Vector hornetAngles = m_pPlayer->GetWeaponAngles();
 	Vector targetdir = gpGlobals->v_forward;
 
 	pHornet = CBaseEntity::Create( "hornet", vecSrc, hornetAngles, true, m_pPlayer->edict() );

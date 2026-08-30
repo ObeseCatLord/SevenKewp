@@ -21,10 +21,27 @@
 #include "wc_config.h"
 #include "CBaseEntity.h"
 
+#include <float.h>
+#include <stdlib.h>
+
 extern CVoiceGameMgr g_VoiceGameMgr;
 extern cvar_t allow_spectators;
 extern int g_teamplay;
 extern float g_flWeaponCheat;
+
+static BOOL VR_ParseCommandFloat(const char* text, float* value)
+{
+	char* end;
+	double parsed;
+
+	if (!text || !text[0])
+		return FALSE;
+	parsed = strtod(text, &end);
+	if (end == text || *end || parsed != parsed || parsed < -FLT_MAX || parsed > FLT_MAX)
+		return FALSE;
+	*value = (float)parsed;
+	return *value == *value && *value >= -FLT_MAX && *value <= FLT_MAX;
+}
 
 #if defined( _MSC_VER ) || defined( WIN32 )
 typedef wchar_t	uchar16;
@@ -552,6 +569,30 @@ void ClientCommand(edict_t* pEntity)
 	{
 		if (pPlayer->IsObserver())
 			pPlayer->Observer_SetMode(atoi(CMD_ARGV(1)));
+	}
+	else if (FStrEq(pcmd, "updatevr"))
+	{
+		float values[15];
+
+		if (CMD_ARGC() != 16)
+			return;
+		for (int index = 0; index < 15; ++index) {
+			if (!VR_ParseCommandFloat(CMD_ARGV(index + 1), &values[index]))
+				return;
+		}
+
+		pPlayer->UpdateVRPose(
+			Vector(values[0], values[1], values[2]),
+			Vector(values[3], values[4], values[5]),
+			Vector(values[6], values[7], values[8]),
+			Vector(values[9], values[10], values[11]),
+			Vector(values[12], values[13], values[14]));
+	}
+	else if (FStrEq(pcmd, "vruse2"))
+	{
+		if (CMD_ARGC() != 2 || (!FStrEq(CMD_ARGV(1), "0") && !FStrEq(CMD_ARGV(1), "1")))
+			return;
+		pPlayer->SetVRUse2State(FStrEq(CMD_ARGV(1), "1"));
 	}
 	else if (FStrEq(pcmd, "closemenus"))
 	{

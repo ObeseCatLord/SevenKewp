@@ -230,6 +230,17 @@ public:
 	virtual void PreThink( void ) STUB_VOID;
 	virtual void PostThink( void ) STUB_VOID;
 	virtual Vector GetGunPosition( void );
+	BOOL HasFreshVRPose( void ) const;
+	Vector GetWeaponPosition( void ) const;
+	Vector GetWeaponAngles( void ) const;
+	Vector GetWeaponViewAngles( void ) const;
+	Vector GetWeaponVelocity( void ) const;
+	Vector GetOffhandPosition( void ) const;
+	Vector GetOffhandAngles( void ) const;
+	BOOL UpdateVRPose( const Vector& weaponPosition, const Vector& weaponAngles,
+		const Vector& weaponVelocity, const Vector& offhandPosition, const Vector& offhandAngles );
+	void SetVRUse2State( BOOL down );
+	void ClearVRPose( void );
 	virtual int TakeHealth( float flHealth, int bitsDamageType, float healthcap=0) STUB_INT;
 	virtual void TraceAttack( entvars_t *pevAttacker, float flDamage, Vector vecDir, TraceResult *ptr, int bitsDamageType) STUB_VOID;
 	virtual int TakeDamage( entvars_t* pevInflictor, entvars_t* pevAttacker, float flDamage, int bitsDamageType) STUB_INT;
@@ -567,6 +578,23 @@ public:
 	//float m_lastMonsterInfoMsg;
 	//float m_lastMonsterInfoTrace;
 	//char m_lastMonsterInfoText[128];
+
+private:
+	// Transient client tracking state. Do not add these fields to m_playerSaveData.
+	Vector m_vecVRWeaponPosition;
+	Vector m_vecVRWeaponAngles;
+	Vector m_vecVRWeaponVelocity;
+	Vector m_vecVROffhandPosition;
+	Vector m_vecVROffhandAngles;
+	float m_flVRPoseTime;
+	BOOL m_bVRUse2;
+	BOOL m_bVRUse2Pressed;
+	BOOL m_bVRUse2Released;
+
+	void ClearVRUse2State( void );
+	void PlayerUseStock( void );
+	void PlayerUseTracked( const Vector& handOrigin, const Vector& handAngles,
+		BOOL useActive, BOOL usePressed, BOOL useReleased );
 };
 
 #endif // PLAYER_H

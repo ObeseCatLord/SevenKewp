@@ -380,7 +380,7 @@ void CDisplacer::FireThink()
 		*/
 
 #ifndef CLIENT_DLL
-	const Vector vecAnglesAim = m_pPlayer->pev->v_angle + m_pPlayer->pev->punchangle;
+	const Vector vecAnglesAim = m_pPlayer->GetWeaponViewAngles();
 
 	UTIL_MakeVectors(vecAnglesAim);
 

@@ -149,7 +149,7 @@ void CGrapple::PrimaryAttack()
 		return;
 	}
 
-	UTIL_MakeVectors(m_pPlayer->pev->v_angle + m_pPlayer->pev->punchangle);
+	UTIL_MakeVectors(m_pPlayer->GetWeaponViewAngles());
 
 #ifndef CLIENT_DLL
 	CGrappleTip* m_pTip = (CGrappleTip*)m_hTip.GetEntity();
@@ -329,7 +329,7 @@ void CGrapple::PrimaryAttack()
 #ifndef CLIENT_DLL
 	if (m_pTip->GetGrappleType() != CGrappleTip::TargetClass::FIXED && m_pTip->IsStuck())
 	{
-		UTIL_MakeVectors(m_pPlayer->pev->v_angle);
+		UTIL_MakeVectors(m_pPlayer->GetWeaponViewAngles());
 
 		Vector vecSrc = m_pPlayer->GetGunPosition();
 
@@ -497,7 +497,7 @@ void CGrapple::CreateEffect()
 
 	m_pTip->Spawn();
 
-	UTIL_MakeVectors(m_pPlayer->pev->v_angle);
+	UTIL_MakeVectors(m_pPlayer->GetWeaponViewAngles());
 
 	Vector vecOrigin =
 		m_pPlayer->GetGunPosition() +
@@ -505,7 +505,7 @@ void CGrapple::CreateEffect()
 		gpGlobals->v_right * 8.0 +
 		gpGlobals->v_up * -8.0;
 
-	Vector vecAngles = m_pPlayer->pev->v_angle;
+	Vector vecAngles = m_pPlayer->GetWeaponAngles();
 
 	vecAngles.x = -vecAngles.x;
 

@@ -356,7 +356,7 @@ void CGauss::StartFire( void )
 	secondaryBaseDamage = gSkillData.sk_plr_secondarygauss;
 #endif
 
-	UTIL_MakeVectors( m_pPlayer->pev->v_angle + m_pPlayer->pev->punchangle );
+	UTIL_MakeVectors(m_pPlayer->GetWeaponViewAngles());
 	Vector vecAiming = gpGlobals->v_forward;
 	Vector vecSrc = m_pPlayer->GetGunPosition( ); // + gpGlobals->v_up * -8 + gpGlobals->v_right * 8;
 

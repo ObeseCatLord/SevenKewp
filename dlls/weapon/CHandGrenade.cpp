@@ -164,7 +164,7 @@ void CHandGrenade::WeaponIdle( void )
 
 	if ( m_flStartThrow )
 	{
-		Vector angThrow = m_pPlayer->pev->v_angle + m_pPlayer->pev->punchangle;
+		Vector angThrow = m_pPlayer->GetWeaponViewAngles();
 
 		if ( angThrow.x < 0 )
 			angThrow.x = -10 + angThrow.x * ( ( 90 - 10 ) / 90.0 );
@@ -178,9 +178,13 @@ void CHandGrenade::WeaponIdle( void )
 
 		UTIL_MakeVectors( angThrow );
 
-		Vector vecSrc = m_pPlayer->pev->origin + m_pPlayer->pev->view_ofs + gpGlobals->v_forward * 16;
-
+		Vector vecSrc = m_pPlayer->GetWeaponPosition() + gpGlobals->v_forward * 16;
 		Vector vecThrow = gpGlobals->v_forward * flVel + m_pPlayer->pev->velocity;
+		if (m_pPlayer->HasFreshVRPose()) {
+			vecSrc = m_pPlayer->GetWeaponPosition();
+			vecThrow = m_pPlayer->GetWeaponVelocity() * (2.0f / 3.0f) + m_pPlayer->pev->velocity;
+			flVel = vecThrow.Length();
+		}
 
 		// alway explode 3 seconds after the pin was pulled
 		float time = m_flStartThrow - gpGlobals->time + 3.0;
@@ -269,7 +273,6 @@ void CHandGrenade::WeaponIdle( void )
 		SendWeaponAnim( iAnim );
 	}
 }
-
 
 
 

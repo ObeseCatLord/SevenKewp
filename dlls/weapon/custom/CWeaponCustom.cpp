@@ -1678,7 +1678,7 @@ void CWeaponCustom::MeleeAttack(int attackIdx) {
 
 	TraceResult tr;
 
-	UTIL_MakeVectors(m_pPlayer->pev->v_angle);
+	UTIL_MakeVectors(m_pPlayer->GetWeaponViewAngles());
 
 	Vector offset = INT32_VEC3_TO_VECTOR(opts.melee.attackOffset);
 	offset = offset.x * gpGlobals->v_forward
@@ -2062,7 +2062,7 @@ void CWeaponCustom::UpdateLaser() {
 
 	m_pSpot->pev->scale = params.laser.dotSz * 0.1f;
 
-	UTIL_MakeVectors(m_pPlayer->pev->v_angle);
+	UTIL_MakeVectors(m_pPlayer->GetWeaponViewAngles());
 	Vector vecSrc = m_pPlayer->GetGunPosition();
 	Vector vecAiming = gpGlobals->v_forward;
 

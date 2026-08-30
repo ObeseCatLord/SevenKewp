@@ -140,7 +140,7 @@ void CSqueak::PrimaryAttack()
 
 	if ( m_pPlayer->m_rgAmmo[ m_iPrimaryAmmoType ] )
 	{
-		UTIL_MakeVectors( m_pPlayer->pev->v_angle );
+		UTIL_MakeVectors(m_pPlayer->GetWeaponViewAngles());
 		TraceResult tr;
 		Vector trace_origin;
 
@@ -152,6 +152,8 @@ void CSqueak::PrimaryAttack()
 		{
 			trace_origin = trace_origin - ( VEC_HULL_MIN - VEC_DUCK_HULL_MIN );
 		}
+		if (m_pPlayer->HasFreshVRPose())
+			trace_origin = m_pPlayer->GetWeaponPosition();
 #endif
 
 		// find place to toss monster
@@ -174,7 +176,7 @@ void CSqueak::PrimaryAttack()
 			m_pPlayer->SetAnimation( PLAYER_ATTACK1 );
 
 #ifndef CLIENT_DLL
-			CBaseEntity *pSqueak = CBaseEntity::Create( "monster_snark", tr.vecEndPos, m_pPlayer->pev->v_angle, true, m_pPlayer->edict() );
+			CBaseEntity *pSqueak = CBaseEntity::Create( "monster_snark", tr.vecEndPos, m_pPlayer->GetWeaponAngles(), true, m_pPlayer->edict() );
 			pSqueak->pev->velocity = gpGlobals->v_forward * 200 + m_pPlayer->pev->velocity;
 #endif
 

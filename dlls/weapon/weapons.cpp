@@ -563,6 +563,7 @@ void W_Precache(void)
 	UTIL_RegisterAmmoCustomAlias("ammo_ARgrenades", "ammo_mp5grenades");
 	UTIL_RegisterAmmoCustomAlias("ammo_ARgrenades", "ammo_argrenades");
 	UTIL_RegisterAmmoCustomAlias("ammo_9mmAR", "ammo_9mmar");
+	UTIL_RegisterAmmoCustomAlias("ammo_9mmAR", "ammo_9mmARclip");
 	UTIL_RegisterAmmoCustomAlias("ammo_9mmAR", "ammo_mp5clip");
 	UTIL_RegisterAmmoCustomAlias("ammo_9mmAR", "ammo_556clip");
 	UTIL_RegisterAmmoCustomAlias("ammo_gaussclip", "ammo_egonclip");

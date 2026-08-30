@@ -236,7 +236,7 @@ void CShockRifle::BeamAttack(bool isSecondary) {
 	m_pPlayer->pev->effects |= EF_MUZZLEFLASH;
 
 #ifndef CLIENT_DLL
-	Vector vecAnglesAim = m_pPlayer->pev->v_angle + m_pPlayer->pev->punchangle;
+	Vector vecAnglesAim = m_pPlayer->GetWeaponViewAngles();
 	
 	if (isSecondary) {
 		float x, y;

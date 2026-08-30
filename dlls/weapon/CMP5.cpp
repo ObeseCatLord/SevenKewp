@@ -244,12 +244,12 @@ void CMP5::SecondaryAttack( void )
 	m_pPlayer->SetAnimation(PLAYER_ATTACK1);
 	strcpy_safe(m_pPlayer->m_szAnimExtention, "mp5", 32);
 
- 	UTIL_MakeVectors( m_pPlayer->pev->v_angle + m_pPlayer->pev->punchangle );
+	UTIL_MakeVectors(m_pPlayer->GetWeaponViewAngles());
 
 #ifndef CLIENT_DLL
 	// we don't add in player velocity anymore.
 	CGrenade::ShootContact( m_pPlayer->pev, 
-							m_pPlayer->pev->origin + m_pPlayer->pev->view_ofs + gpGlobals->v_forward * 16, 
+							m_pPlayer->GetWeaponPosition() + gpGlobals->v_forward * 16,
 							gpGlobals->v_forward * 800 );
 #endif
 

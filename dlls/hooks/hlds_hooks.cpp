@@ -219,6 +219,8 @@ GLOBALS ASSUMED SET:  g_fGameOver
 void ClientDisconnect( edict_t *pEntity )
 {
 	CBasePlayer* plr = (CBasePlayer*)GET_PRIVATE(pEntity);
+	if (plr)
+		plr->ClearVRPose();
 	CALL_HOOKS_VOID(pfnClientDisconnect, plr);
 
 	CBasePlayerWeapon::ResetPickupLimits(plr);
@@ -1043,6 +1045,12 @@ void ParmsNewLevel( void )
 
 void ParmsChangeLevel( void )
 {
+	for (int i = 1; i <= gpGlobals->maxClients; ++i) {
+		CBasePlayer* plr = UTIL_PlayerByIndex(i);
+		if (plr)
+			plr->ClearVRPose();
+	}
+
 	// retrieve the pointer to the save data
 	SAVERESTOREDATA *pSaveData = (SAVERESTOREDATA *)gpGlobals->pSaveData;
 

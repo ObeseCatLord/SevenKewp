@@ -533,7 +533,7 @@ void CWeaponEvents::PlayEvent_Beam(WepEvt& evt, CBasePlayer* m_pPlayer) {
 
 void CWeaponEvents::PlayEvent_Projectile(WepEvt& evt, CBasePlayer* m_pPlayer) {
 #ifndef CLIENT_DLL
-	MAKE_VECTORS(m_pPlayer->pev->v_angle + m_pPlayer->pev->punchangle);
+	MAKE_VECTORS(m_pPlayer->GetWeaponViewAngles());
 
 	float x = RANDOM_FLOAT(-0.5, 0.5) + RANDOM_FLOAT(-0.5, 0.5);
 	float y = RANDOM_FLOAT(-0.5, 0.5) + RANDOM_FLOAT(-0.5, 0.5);
@@ -580,7 +580,7 @@ void CWeaponEvents::PlayEvent_Projectile(WepEvt& evt, CBasePlayer* m_pPlayer) {
 	case WC_PROJECTILE_BOLT:
 		shootEnt = CCrossbowBolt::BoltCreate();
 		shootEnt->pev->origin = projectile_ori;
-		shootEnt->pev->angles = m_pPlayer->pev->v_angle;
+		shootEnt->pev->angles = m_pPlayer->GetWeaponAngles();
 		shootEnt->pev->owner = m_pPlayer->edict();
 
 		if (m_pPlayer->pev->waterlevel == 3)
@@ -614,7 +614,7 @@ void CWeaponEvents::PlayEvent_Projectile(WepEvt& evt, CBasePlayer* m_pPlayer) {
 		shootEnt = ShootMortar(m_pPlayer->edict(), projectile_ori, projectile_velocity);
 		break;
 	case WC_PROJECTILE_RPG:
-		shootEnt = CRpgRocket::CreateRpgRocket(projectile_ori, m_pPlayer->pev->v_angle, m_pPlayer, NULL);
+		shootEnt = CRpgRocket::CreateRpgRocket(projectile_ori, m_pPlayer->GetWeaponAngles(), m_pPlayer, NULL);
 		break;
 	case WC_PROJECTILE_WEAPON:
 		ALERT(at_error, "WeaponCustom: WC_PROJECTILE_WEAPON Not implemented\n");
@@ -822,7 +822,7 @@ void CWeaponEvents::PlayEvent_Kickback(WepEvt& evt, CBasePlayer* m_pPlayer) {
 	m_weapon->m_runningKickbackPred = 1;
 	m_weapon->m_kickbackPredVel = (forward * -backForce) + (right * rightForce) + (up * upForce) + (globalUp * globalUpForce);
 #else
-	UTIL_MakeVectors(m_pPlayer->pev->v_angle + m_pPlayer->pev->punchangle);
+	UTIL_MakeVectors(m_pPlayer->GetWeaponViewAngles());
 	m_pPlayer->pev->velocity = m_pPlayer->pev->velocity +
 		gpGlobals->v_forward * -backForce +
 		gpGlobals->v_right * rightForce +
@@ -911,9 +911,9 @@ void CWeaponEvents::PlayEvent_EjectShell(WepEvt& evt, CBasePlayer* m_pPlayer, bo
 #ifdef CLIENT_DLL
 	WC_EV_EjectShell(evt, leftHand);
 #else
-	Vector ori = m_pPlayer->pev->origin + m_pPlayer->pev->view_ofs;
+	Vector ori = m_pPlayer->GetWeaponPosition();
 	Vector vel = m_pPlayer->pev->velocity;
-	Vector angles = m_pPlayer->pev->v_angle + m_pPlayer->pev->punchangle;
+	Vector angles = m_pPlayer->GetWeaponViewAngles();
 
 	Vector forward, right, up;
 	UTIL_MakeVectorsPrivate(angles, forward, right, up);
