@@ -16,6 +16,7 @@ public:
 	int GetItemInfo(ItemInfo *p);
 
 	void PrimaryAttack( void );
+	void ItemPostFrame( void );
 	int Swing( int fFirst );
 	BOOL Deploy( void );
 	void Holster( int skiplocal = 0 );
@@ -34,4 +35,14 @@ public:
 	}
 private:
 	unsigned short m_usCrowbar;
+#ifndef CLIENT_DLL
+	void CheckPhysicalSwing( float speed );
+	bool HasHitEntityThisSwing( CBaseEntity* entity );
+	void RememberHitEntityThisSwing( CBaseEntity* entity );
+	void ClearPhysicalSwingState();
+	bool m_physicalSwinging;
+	float m_physicalHitCount;
+	float m_physicalLastWoosh;
+	EHANDLE m_physicalHitEntities[32];
+#endif
 };
