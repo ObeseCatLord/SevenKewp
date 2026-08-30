@@ -27,12 +27,60 @@
 #include "CWeaponCustom.h"
 #include "sentences.h"
 
-#if !defined ( _WIN32 )
+#if defined( _WIN32 )
+#include <windows.h>
+#else
 #include <ctype.h>
+#include <dlfcn.h>
 #endif
 
 
 static char *memfgets( byte *pMemFile, int fileSize, int &filePos, char *pBuffer, int bufferSize );
+
+// Optional Xash extension. It is a dynamic symbol so no enginefuncs_t or
+// game-DLL callback table ABI changes are needed. The flags passed to it use
+// the native Xash wire values; Seven-only routing flags are handled locally.
+typedef int (*XashTargetedSoundV1Fn)( edict_t *source, edict_t *target, int channel, const char *sample,
+	float volume, float attenuation, int flags, int pitch, const float *origin, int reliable );
+
+static XashTargetedSoundV1Fn GetXashTargetedSoundV1()
+{
+	static XashTargetedSoundV1Fn targetSound;
+	static bool resolved = false;
+
+	if( resolved )
+		return targetSound;
+	resolved = true;
+
+#if defined( _WIN32 )
+	// Normal Xash clients load their engine as xash.dll; standalone engines use
+	// the executable, so retain the main-module fallback for that case.
+	HMODULE engineModule = GetModuleHandleA( "xash.dll" );
+	if( !engineModule )
+		engineModule = GetModuleHandle( NULL );
+	if( engineModule )
+		targetSound = (XashTargetedSoundV1Fn)GetProcAddress( engineModule, "SV_TargetedSoundV1" );
+#else
+	// The normal POSIX launcher loads libxash.so with RTLD_LOCAL, so it is not
+	// visible through the launcher handle. RTLD_NOLOAD gets that exact engine
+	// module without loading an arbitrary library; dedicated Xash is an
+	// executable and is resolved by the NULL handle below.
+	void *engineModule = dlopen( "libxash.so", RTLD_NOW | RTLD_NOLOAD );
+	if( !engineModule )
+		engineModule = dlopen( NULL, RTLD_NOW );
+	if( engineModule )
+		targetSound = (XashTargetedSoundV1Fn)dlsym( engineModule, "SV_TargetedSoundV1" );
+#endif
+
+	return targetSound;
+}
+
+static int XashSoundFlags( int flags )
+{
+	// SND_FL_LARGE_INDEX is chosen by Seven's old serializer. The remaining
+	// high bits are local routing metadata that overlap Xash protocol bits.
+	return flags & ~( SND_FL_LARGE_INDEX | SND_FL_PREDICTED | SND_FL_MOD | SND_FL_GLOBAL | SND_FL_RELIABLE );
+}
 
 // ==================== SENTENCE GROUPS, UTILITY FUNCTIONS  ======================================
 
@@ -534,17 +582,20 @@ void StartSound(edict_t* ent, int channel, const char* sample, float fvolume, fl
 {
 	CALL_HOOKS_VOID(pfnEmitSound, ent, channel, sample, fvolume, attenuation, fFlags | SND_FL_MOD, pitch, origin, messageTargets);
 
-	mstream* bitbuffer = BuildStartSoundMessage(ent, channel, sample, fvolume, attenuation, fFlags, pitch, origin);
-
 	CBaseEntity* bent = CBaseEntity::Instance(ent);
 
-	if (!bitbuffer || !bent) {
+	if (!bent) {
 		return;
 	}
 
-	int msgSz = bitbuffer->tell() + 1;
-	//bool anyMessagesWritten = false;
+	XashTargetedSoundV1Fn xashTargetedSound = GetXashTargetedSoundV1();
+	mstream* bitbuffer = xashTargetedSound ? NULL : BuildStartSoundMessage(ent, channel, sample, fvolume, attenuation, fFlags, pitch, origin);
 
+	if (!xashTargetedSound && !bitbuffer) {
+		return;
+	}
+
+	int msgSz = bitbuffer ? bitbuffer->tell() + 1 : 0;
 	int sendMode = (fFlags & SND_FL_RELIABLE) ? MSG_ONE : MSG_ONE_UNRELIABLE;
 
 	for (int i = 1; i <= gpGlobals->maxClients; i++) {
@@ -556,9 +607,15 @@ void StartSound(edict_t* ent, int channel, const char* sample, float fvolume, fl
 		}
 
 		if ((fFlags & SND_FL_GLOBAL) || !ent || bent->InPAS(plent)) {
-			MESSAGE_BEGIN(sendMode, SVC_SOUND, NULL, plent);
-			WRITE_BYTES((uint8_t*)bitbuffer->getBuffer(), msgSz);
-			MESSAGE_END();
+			if (xashTargetedSound) {
+				xashTargetedSound(ent, plent, channel, sample, fvolume, attenuation, XashSoundFlags(fFlags), pitch, origin,
+					(fFlags & SND_FL_RELIABLE) != 0);
+			}
+			else {
+				MESSAGE_BEGIN(sendMode, SVC_SOUND, NULL, plent);
+				WRITE_BYTES((uint8_t*)bitbuffer->getBuffer(), msgSz);
+				MESSAGE_END();
+			}
 		}
 		//anyMessagesWritten = true;
 	}
