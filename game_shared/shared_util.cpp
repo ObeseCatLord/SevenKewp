@@ -546,15 +546,21 @@ std::string getGameFilePath(const char* path, bool matchCase) {
 	GET_GAME_DIR(gameDir);
 #endif
 
-	std::string searchPaths[3] = {
+	// SevenKewp is normally installed beside a legally owned Half-Life
+	// `valve` directory. Engine fallback lookup already sees those resources,
+	// but this helper performs direct filesystem checks before precaching and
+	// parsing files. Include the same base-game fallback so valid loose Steam
+	// resources are not rejected as missing before the engine can load them.
+	std::string searchPaths[] = {
 		gameDir + std::string("_addon/"),
 		gameDir + std::string("/"),
 		gameDir + std::string("_downloads/"),
+		"valve/",
 	};
 
 	std::string lowerPath = toLowerCase(path);
 
-	for (int i = 0; i < 3; i++) {
+	for (size_t i = 0; i < ARRAYSIZE(searchPaths); i++) {
 		std::string searchLower = normalize_path(searchPaths[i] + lowerPath);
 
 		if (fileExists(searchLower.c_str())) {
@@ -956,23 +962,23 @@ bool UTIL_ParseHexColor(const char* hex, int& r, int& g, int& b) {
 		return false;
 
 	static const unsigned char hex_lut[256] = {
-		// 0x00 – 0x0F
+		// 0x00 - 0x0F
 		0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-		// 0x10 – 0x1F
+		// 0x10 - 0x1F
 		0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-		// 0x20 – 0x2F
+		// 0x20 - 0x2F
 		0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-		// 0x30 – 0x3F   ('0'–'9')
+		// 0x30 - 0x3F   ('0'-'9')
 		0,1,2,3,4,5,6,7,8,9, 0,0,0,0,0,0,
-		// 0x40 – 0x4F   ('A'–'O')
+		// 0x40 - 0x4F   ('A'-'O')
 		0,10,11,12,13,14,15,0,0,0,0,0,0,0,0,0,
-		// 0x50 – 0x5F   ('P'–'_')
+		// 0x50 - 0x5F   ('P'-'_')
 		0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-		// 0x60 – 0x6F   ('`'–'o')
+		// 0x60 - 0x6F   ('`'-'o')
 		0,10,11,12,13,14,15,0,0,0,0,0,0,0,0,0,
-		// 0x70 – 0x7F   ('p'–DEL)
+		// 0x70 - 0x7F   ('p'-DEL)
 		0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-		// 0x80 – 0xFF
+		// 0x80 - 0xFF
 		0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 		0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 		0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
