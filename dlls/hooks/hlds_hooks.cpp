@@ -1588,6 +1588,13 @@ int AddToFullPack( struct entity_state_s *state, int e, edict_t *ent, edict_t *h
 	state->rendercolor.g = ent->v.rendercolor.y;
 	state->rendercolor.b = ent->v.rendercolor.z;
 
+	const int vrHighlightMode = plr->VRHighlightMode(baseent);
+	if (vrHighlightMode) {
+		state->renderfx = vrHighlightMode == 2 ? kRenderFxNoDissipation : kRenderFxPulseFast;
+		state->rendermode = kRenderGlow;
+		state->renderamt = 192;
+	}
+
 	state->aiment = 0;
 	if ( ent->v.aiment )
 	{

@@ -241,6 +241,7 @@ public:
 		const Vector& weaponVelocity, const Vector& offhandPosition, const Vector& offhandAngles );
 	void SetVRUse2State( BOOL down );
 	void ClearVRPose( void );
+	int VRHighlightMode( const CBaseEntity* entity );
 	virtual int TakeHealth( float flHealth, int bitsDamageType, float healthcap=0) STUB_INT;
 	virtual void TraceAttack( entvars_t *pevAttacker, float flDamage, Vector vecDir, TraceResult *ptr, int bitsDamageType) STUB_VOID;
 	virtual int TakeDamage( entvars_t* pevInflictor, entvars_t* pevAttacker, float flDamage, int bitsDamageType) STUB_INT;
@@ -590,11 +591,13 @@ private:
 	BOOL m_bVRUse2;
 	BOOL m_bVRUse2Pressed;
 	BOOL m_bVRUse2Released;
+	EHANDLE m_hVRUsableEntity[2];
+	BOOL m_bVRUsingEntity[2];
 
 	void ClearVRUse2State( void );
 	void PlayerUseStock( void );
 	void PlayerUseTracked( const Vector& handOrigin, const Vector& handAngles,
-		BOOL useActive, BOOL usePressed, BOOL useReleased );
+		BOOL useActive, BOOL usePressed, BOOL useReleased, BOOL offhand );
 };
 
 #endif // PLAYER_H

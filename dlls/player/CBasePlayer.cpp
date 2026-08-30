@@ -423,12 +423,29 @@ Vector CBasePlayer::GetOffhandAngles(void) const
 void CBasePlayer::ClearVRPose(void)
 {
 	ClearVRUse2State();
+	m_hVRUsableEntity[0] = NULL;
+	m_hVRUsableEntity[1] = NULL;
+	m_bVRUsingEntity[0] = FALSE;
+	m_bVRUsingEntity[1] = FALSE;
 	m_vecVRWeaponPosition = g_vecZero;
 	m_vecVRWeaponAngles = g_vecZero;
 	m_vecVRWeaponVelocity = g_vecZero;
 	m_vecVROffhandPosition = g_vecZero;
 	m_vecVROffhandAngles = g_vecZero;
 	m_flVRPoseTime = -1.0f;
+}
+
+int CBasePlayer::VRHighlightMode(const CBaseEntity* entity)
+{
+	if (!entity)
+		return 0;
+
+	int mode = 0;
+	for (int hand = 0; hand < 2; ++hand) {
+		if (m_hVRUsableEntity[hand].GetEntity() == entity)
+			mode = m_bVRUsingEntity[hand] ? 2 : V_max(mode, 1);
+	}
+	return mode;
 }
 
 void CBasePlayer::ClearVRUse2State(void)
@@ -2244,11 +2261,7 @@ void CBasePlayer::PlayerUse(void)
 		return;
 	}
 
-	const BOOL primaryUseActive = (pev->button | m_afButtonPressed | m_afButtonReleased) & IN_USE;
 	const BOOL offhandUseActive = m_bVRUse2 || m_bVRUse2Pressed || m_bVRUse2Released;
-	if (!primaryUseActive && !offhandUseActive)
-		return;
-
 	// The tracked path keeps the existing train/tank transition rules, but either
 	// hand may issue the transition while a fresh pose authorizes it.
 	if ((m_afButtonPressed & IN_USE) || m_bVRUse2Pressed) {
@@ -2289,26 +2302,27 @@ void CBasePlayer::PlayerUse(void)
 		}
 	}
 
-	if (primaryUseActive)
-		PlayerUseTracked(GetWeaponPosition(), GetWeaponViewAngles(), pev->button & IN_USE,
-			m_afButtonPressed & IN_USE, m_afButtonReleased & IN_USE);
+	PlayerUseTracked(GetWeaponPosition(), GetWeaponViewAngles(), pev->button & IN_USE,
+		m_afButtonPressed & IN_USE, m_afButtonReleased & IN_USE, FALSE);
 	if (offhandUseActive) {
 		if (m_bVRUse2Pressed && m_bVRUse2Released) {
-			PlayerUseTracked(GetOffhandPosition(), GetOffhandAngles(), FALSE, TRUE, FALSE);
-			PlayerUseTracked(GetOffhandPosition(), GetOffhandAngles(), FALSE, FALSE, TRUE);
+			PlayerUseTracked(GetOffhandPosition(), GetOffhandAngles(), FALSE, TRUE, FALSE, TRUE);
+			PlayerUseTracked(GetOffhandPosition(), GetOffhandAngles(), FALSE, FALSE, TRUE, TRUE);
 		}
 		else {
 			PlayerUseTracked(GetOffhandPosition(), GetOffhandAngles(), m_bVRUse2,
-				m_bVRUse2Pressed, m_bVRUse2Released);
+				m_bVRUse2Pressed, m_bVRUse2Released, TRUE);
 		}
 	}
+	else
+		PlayerUseTracked(GetOffhandPosition(), GetOffhandAngles(), FALSE, FALSE, FALSE, TRUE);
 
 	m_bVRUse2Pressed = FALSE;
 	m_bVRUse2Released = FALSE;
 }
 
 void CBasePlayer::PlayerUseTracked(const Vector& handOrigin, const Vector& handAngles,
-	BOOL useActive, BOOL usePressed, BOOL useReleased)
+	BOOL useActive, BOOL usePressed, BOOL useReleased, BOOL offhand)
 {
 	CBaseEntity* pObject = NULL;
 	CBaseEntity* pClosest = NULL;
@@ -2353,14 +2367,25 @@ void CBasePlayer::PlayerUseTracked(const Vector& handOrigin, const Vector& handA
 			pClosest = NULL;
 	}
 
+	const int hand = offhand ? 1 : 0;
+	m_hVRUsableEntity[hand] = NULL;
+	m_bVRUsingEntity[hand] = FALSE;
+	if (pClosest && pClosest->pev->movetype != MOVETYPE_PUSHSTEP &&
+		pClosest->Classify() != CLASS_HUMAN_PASSIVE && pClosest->Classify() != CLASS_PLAYER_ALLY)
+		m_hVRUsableEntity[hand] = pClosest;
+
 	if (pClosest) {
 		const int caps = pClosest->ObjectCaps();
-		if (usePressed)
+		if (usePressed) {
 			EMIT_SOUND(ENT(pev), CHAN_ITEM, "common/wpn_select.wav", 0.4, ATTN_NORM);
+			CLIENT_COMMAND(edict(), "vr_haptic 120 %d 0.8\n", offhand ? -2 : -1);
+		}
 		if ((useActive && (caps & FCAP_CONTINUOUS_USE)) ||
 			(usePressed && (caps & (FCAP_IMPULSE_USE | FCAP_ONOFF_USE)))) {
-			if (caps & FCAP_CONTINUOUS_USE)
+			if (caps & FCAP_CONTINUOUS_USE) {
 				m_afPhysicsFlags |= PFLAG_USING;
+				m_bVRUsingEntity[hand] = TRUE;
+			}
 			FireTarget(pClosest, this, this, (caps & FCAP_CONTINUOUS_USE) ? USE_SET : USE_TOGGLE,
 				(caps & FCAP_CONTINUOUS_USE) ? 1 : 0);
 		}
