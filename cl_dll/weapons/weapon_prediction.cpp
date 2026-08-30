@@ -53,6 +53,7 @@
 
 #include "hud_iface.h"
 #include "cl_dll.h"
+#include "vr_client.h"
 #define PRINTF(fmt, ...) gEngfuncs.Con_Printf(fmt, __VA_ARGS__)
 
 extern int g_iUser1;
@@ -760,6 +761,7 @@ Run Weapon firing code on client
 */
 void HUD_WeaponsPostThink( local_state_s *from, local_state_s *to, usercmd_t *cmd, double time, unsigned int random_seed )
 {
+	VR_UpdateCurrentWeapon( to->client.m_iId );
 	HUD_InitClientWeapons();	
 
 	CBasePlayerWeapon* pWeapon = GetPredictedWeapon(from->client.m_iId);

@@ -101,6 +101,7 @@ kbutton_t	in_moveright;
 kbutton_t	in_strafe;
 kbutton_t	in_speed;
 kbutton_t	in_use;
+kbutton_t	in_use2;
 kbutton_t	in_jump;
 kbutton_t	in_attack;
 kbutton_t	in_attack2;
@@ -473,6 +474,20 @@ void IN_UseDown (void)
 	gHUD.m_Spectator.HandleButtonsDown( IN_USE );
 }
 void IN_UseUp (void) {KeyUp(&in_use);}
+void IN_Use2Down( void )
+{
+	const int wasDown = in_use2.state & 1;
+	KeyDown( &in_use2 );
+	if( !wasDown && ( in_use2.state & 1 ) )
+		gEngfuncs.pfnClientCmd( "vruse2 1\n" );
+}
+void IN_Use2Up( void )
+{
+	const int wasDown = in_use2.state & 1;
+	KeyUp( &in_use2 );
+	if( wasDown && !( in_use2.state & 1 ) )
+		gEngfuncs.pfnClientCmd( "vruse2 0\n" );
+}
 void IN_JumpDown (void)
 {
 	KeyDown(&in_jump);
@@ -908,6 +923,7 @@ int CL_ButtonBits( int bResetState )
 		in_forward.state &= ~2;
 		in_back.state &= ~2;
 		in_use.state &= ~2;
+		in_use2.state &= ~2;
 		in_left.state &= ~2;
 		in_right.state &= ~2;
 		in_moveleft.state &= ~2;
@@ -984,6 +1000,8 @@ void InitInput (void)
 	gEngfuncs.pfnAddCommand ("-attack2", IN_Attack2Up);
 	gEngfuncs.pfnAddCommand ("+use", IN_UseDown);
 	gEngfuncs.pfnAddCommand ("-use", IN_UseUp);
+	gEngfuncs.pfnAddCommand ("+use2", IN_Use2Down);
+	gEngfuncs.pfnAddCommand ("-use2", IN_Use2Up);
 	gEngfuncs.pfnAddCommand ("+jump", IN_JumpDown);
 	gEngfuncs.pfnAddCommand ("-jump", IN_JumpUp);
 	gEngfuncs.pfnAddCommand ("impulse", IN_Impulse);

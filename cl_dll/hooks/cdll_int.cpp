@@ -43,6 +43,7 @@
 #include "vgui_TeamFortressViewport.h"
 #include "../public/interface_hlsdk.h"
 #include "effects.h"
+#include "vr_client.h"
 
 #include <SDL2/SDL_events.h>
 #include <SDL2/SDL_mouse.h>
@@ -230,6 +231,7 @@ void CL_DLLEXPORT HUD_Init( void )
 //	RecClHudInit();
 	InitInput();
 	gHUD.Init();
+	VR_Init();
 	Scheme_Init();
 }
 
@@ -294,6 +296,7 @@ void CL_DLLEXPORT HUD_Reset( void )
 //	RecClHudReset();
 
 	gHUD.VidInit();
+	VR_Reset();
 }
 
 extern int mouse_uncenter_phase;

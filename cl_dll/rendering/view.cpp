@@ -21,6 +21,7 @@
 #include "hltv.h"
 #include "Exports.h"
 #include "com_weapons.h"
+#include "vr_client.h"
 
 
 #ifndef M_PI
@@ -725,13 +726,12 @@ void V_CalcNormalRefdef ( struct ref_params_s *pparams )
 
 	
 
-	// Add in the punchangle, if any
-	VectorAdd ( pparams->viewangles, pparams->punchangle, pparams->viewangles );
-
-	// Include client side punch, too
-	VectorAdd ( pparams->viewangles, (float *)&gPlayerSim.ev_punchangle, pparams->viewangles);
-
-	V_DropPunchAngle ( pparams->frametime, (float *)&gPlayerSim.ev_punchangle );
+	if( VR_ShouldApplyWeaponRecoil() )
+	{
+		VectorAdd ( pparams->viewangles, pparams->punchangle, pparams->viewangles );
+		VectorAdd ( pparams->viewangles, (float *)&gPlayerSim.ev_punchangle, pparams->viewangles);
+		V_DropPunchAngle ( pparams->frametime, (float *)&gPlayerSim.ev_punchangle );
+	}
 
 	gPlayerSim.sv_punchangle = pparams->punchangle;
 	gPlayerSim.v_punchangle = gPlayerSim.ev_punchangle;
@@ -1685,6 +1685,9 @@ void CL_DLLEXPORT V_CalcRefdef( struct ref_params_s *pparams )
 	{
 		V_CalcNormalRefdef ( pparams );
 	}
+
+	if( pparams->nextView == 0 )
+		VR_UpdateViewmodel( pparams );
 
 /*
 // Example of how to overlay the whole screen with red at 50 % alpha

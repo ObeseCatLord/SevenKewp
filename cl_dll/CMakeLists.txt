@@ -161,6 +161,7 @@ set(INPUT_SRC
 
 set(MISC_HDR
 	cl_dll.h
+	vr_client.h
 	../common/Platform.h
 )
 set(UTIL_HDR
@@ -177,6 +178,7 @@ set(UTIL_HDR
 	../game_shared/sprites.h
 )
 set(UTIL_SRC
+	util/debug.cpp
 	util/interpolation.cpp
 	util/cl_util.cpp
 	util/cl_eng_wrappers.cpp
@@ -277,6 +279,7 @@ set(ALL_SRC
 	${UTIL_SRC} ${UTIL_HDR}
 	${RENDER_SRC} ${RENDER_HDR}
 	${HOOKS_SRC} ${HOOKS_HDR}
+	vr_client.cpp
 	${CMAKE_CURRENT_BINARY_DIR}/weapons_shared.cpp
 )
 

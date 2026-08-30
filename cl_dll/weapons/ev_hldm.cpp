@@ -21,11 +21,26 @@
 #include "ev_hldm.h"
 #include "event_api.h"
 #include "in_defs.h"
+#include "vr_client.h"
 
 
 extern engine_studio_api_t IEngineStudio;
 
 static int tracerCount[ 32 ];
+
+static void VR_HapticLocalWeaponFire( int idx, int bulletType )
+{
+	if( !EV_IsLocal( idx ) ) return;
+	const unsigned int dominant = (unsigned int)VR_GetDominantHand();
+	const unsigned int support = dominant == VR_CLIENT_HAND_LEFT ? VR_CLIENT_HAND_RIGHT : VR_CLIENT_HAND_LEFT;
+	switch( bulletType )
+	{
+	case BULLET_PLAYER_MP5: VR_Haptic( 60.0f, dominant, 0.75f ); if( VR_IsWeaponStabilised() ) VR_Haptic( 60.0f, support, 0.5f ); break;
+	case BULLET_PLAYER_BUCKSHOT: VR_Haptic( 120.0f, dominant, 0.9f ); if( VR_IsWeaponStabilised() ) VR_Haptic( 120.0f, support, 0.75f ); break;
+	case BULLET_PLAYER_357: VR_Haptic( 120.0f, dominant, 0.8f ); break;
+	default: VR_Haptic( 120.0f, dominant, 0.4f ); break;
+	}
+}
 
 #include "pm_shared.h"
 #include "studio.h"
@@ -367,6 +382,7 @@ void EV_HLDM_FireBullets( int idx, float *forward, float *right, float *up, int 
 	pmtrace_t tr;
 	int iShot;
 	int tracer;
+	VR_HapticLocalWeaponFire( idx, iBulletType );
 	
 	for ( iShot = 1; iShot <= cShots; iShot++ )	
 	{

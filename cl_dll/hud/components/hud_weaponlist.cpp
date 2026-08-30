@@ -27,6 +27,8 @@ DECLARE_COMMAND(m_WeaponList, Slot10);
 DECLARE_COMMAND(m_WeaponList, Close);
 DECLARE_COMMAND(m_WeaponList, NextWeapon);
 DECLARE_COMMAND(m_WeaponList, PrevWeapon);
+DECLARE_COMMAND(m_WeaponList, NextWeaponSlot);
+DECLARE_COMMAND(m_WeaponList, PrevWeaponSlot);
 
 
 // for aborting an action while holding an exclusive weapon
@@ -196,6 +198,36 @@ void CHudWeaponList::UserCmd_PrevWeapon(void)
 	m_pActiveSel = NULL;
 }
 
+void CHudWeaponList::UserCmd_NextWeaponSlot(void)
+{
+	if (gHUD.m_fPlayerDead || (gHUD.m_iHideHUDDisplay & (HIDEHUD_WEAPONS | HIDEHUD_ALL))) return;
+	if (!m_pActiveSel || m_pActiveSel == (WEAPON*)1) m_pActiveSel = g_pActiveWeapon;
+	int slot = m_pActiveSel ? m_pActiveSel->iSlot + 1 : 0;
+	for (int loop = 0; loop <= 1; loop++) {
+		for (; slot < MAX_WEAPON_SLOTS; slot++) for (int pos = 0; pos < MAX_WEAPON_POSITIONS; pos++) {
+			WEAPON* weapon = gWR.GetWeaponSlot(slot, pos);
+			if (weapon && (gWR.HasAmmo(weapon) || (weapon->iFlags & WEAPON_FLAGS_SELECTONEMPTY))) { m_pActiveSel = weapon; return; }
+		}
+		slot = 0;
+	}
+	m_pActiveSel = NULL;
+}
+
+void CHudWeaponList::UserCmd_PrevWeaponSlot(void)
+{
+	if (gHUD.m_fPlayerDead || (gHUD.m_iHideHUDDisplay & (HIDEHUD_WEAPONS | HIDEHUD_ALL))) return;
+	if (!m_pActiveSel || m_pActiveSel == (WEAPON*)1) m_pActiveSel = g_pActiveWeapon;
+	int slot = m_pActiveSel ? m_pActiveSel->iSlot - 1 : MAX_WEAPON_SLOTS - 1;
+	for (int loop = 0; loop <= 1; loop++) {
+		for (; slot >= 0; slot--) for (int pos = MAX_WEAPON_POSITIONS - 1; pos >= 0; pos--) {
+			WEAPON* weapon = gWR.GetWeaponSlot(slot, pos);
+			if (weapon && (gWR.HasAmmo(weapon) || (weapon->iFlags & WEAPON_FLAGS_SELECTONEMPTY))) { m_pActiveSel = weapon; return; }
+		}
+		slot = MAX_WEAPON_SLOTS - 1;
+	}
+	m_pActiveSel = NULL;
+}
+
 
 
 int CHudWeaponList::Init(void)
@@ -213,6 +245,8 @@ int CHudWeaponList::Init(void)
 	HOOK_COMMAND("cancelselect", Close);
 	HOOK_COMMAND("invnext", NextWeapon);
 	HOOK_COMMAND("invprev", PrevWeapon);
+	HOOK_COMMAND("invnextslot", NextWeaponSlot);
+	HOOK_COMMAND("invprevslot", PrevWeaponSlot);
 
 	gHUD.AddHudElem(this);
 

@@ -53,6 +53,12 @@ void CHudFlashlight::Reset(void)
 	m_fOn = 0;
 }
 
+int CHudFlashlight::HasFlashlight( void ) const
+{
+	return m_fOn && ( gHUD.m_iWeaponBits & ( 1ULL << WEAPON_SUIT ) ) &&
+		!( gHUD.m_iHideHUDDisplay & ( HIDEHUD_FLASHLIGHT | HIDEHUD_ALL ) );
+}
+
 int CHudFlashlight::VidInit(void)
 {
 	ReloadSprites();

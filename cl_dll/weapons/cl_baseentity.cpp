@@ -4,6 +4,7 @@
 #include "../dlls/player/CBasePlayer.h"
 #include "prediction_files.h"
 #include "ev_custom.h"
+#include "vr_client.h"
 
 //
 // Client-side implementations of server functions.
@@ -418,7 +419,38 @@ float CBasePlayer::GetDamage(float defaultDamage) {
 }
 
 Vector CBasePlayer::GetGunPosition(void) {
-	return WC_GetGunPosition();
+	return GetWeaponPosition();
+}
+
+BOOL CBasePlayer::HasFreshVRPose( void ) const { return VR_IsActive() && gEngfuncs.GetViewModel() != NULL; }
+Vector CBasePlayer::GetWeaponPosition( void ) const
+{
+	cl_entity_t *view = gEngfuncs.GetViewModel();
+	return HasFreshVRPose() && view ? Vector( view->curstate.origin ) : pev->origin + pev->view_ofs;
+}
+Vector CBasePlayer::GetWeaponAngles( void ) const
+{
+	cl_entity_t *view = gEngfuncs.GetViewModel();
+	return HasFreshVRPose() && view ? Vector( view->curstate.angles ) : pev->v_angle;
+}
+Vector CBasePlayer::GetWeaponViewAngles( void ) const
+{
+	Vector angles = GetWeaponAngles();
+	if( HasFreshVRPose() ) angles.x = -angles.x;
+	return angles;
+}
+Vector CBasePlayer::GetWeaponVelocity( void ) const
+{
+	cl_entity_t *view = gEngfuncs.GetViewModel();
+	return HasFreshVRPose() && view ? Vector( view->curstate.velocity ) : g_vecZero;
+}
+Vector CBasePlayer::GetOffhandPosition( void ) const
+{
+	return HasFreshVRPose() ? GetWeaponPosition() : pev->origin + pev->view_ofs;
+}
+Vector CBasePlayer::GetOffhandAngles( void ) const
+{
+	return HasFreshVRPose() ? GetWeaponAngles() : pev->v_angle;
 }
 
 Vector CBasePlayer::GetAutoaimVector(float flDelta) {

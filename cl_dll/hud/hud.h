@@ -149,6 +149,8 @@ public:
 	void _cdecl UserCmd_Close(void);
 	void _cdecl UserCmd_NextWeapon(void);
 	void _cdecl UserCmd_PrevWeapon(void);
+	void _cdecl UserCmd_NextWeaponSlot(void);
+	void _cdecl UserCmd_PrevWeaponSlot(void);
 
 private:
 	int DrawBar(int x, int y, int width, int height, float f);
@@ -528,6 +530,7 @@ public:
 	void Reset( void );
 	int MsgFunc_Flashlight(const char *pszName,  int iSize, void *pbuf );
 	int MsgFunc_FlashBat(const char *pszName,  int iSize, void *pbuf );
+	int HasFlashlight( void ) const;
 	virtual const char* HudName() { return "CHudFlashlight"; }
 	
 	int	  m_fOn;
@@ -885,4 +888,3 @@ extern int g_iTeamNumber;
 extern int g_iUser1;
 extern int g_iUser2;
 extern int g_iUser3;
-
