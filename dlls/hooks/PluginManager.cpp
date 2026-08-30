@@ -348,7 +348,8 @@ void PluginManager::UpdatePluginsFromList(bool forceUpdate) {
 
 		int endPos = line.find("//");
 		if (endPos != -1)
-			line = trimSpaces(line.substr(0, endPos));
+			line = line.substr(0, endPos);
+		line = trimSpaces(line);
 
 		if (line.empty()) {
 			continue;
