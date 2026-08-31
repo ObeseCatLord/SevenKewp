@@ -438,6 +438,7 @@ set(WEAPON_SRC
 	weapon/combat.cpp
 )
 set(DEFAULT_WEAPON_HDR
+	compat/theyhunger/CWeaponAP9.h
 	weapon/CShockBeam.h
 	weapon/CGrapple.h
 	weapon/CGrappleTip.h
@@ -465,6 +466,7 @@ set(DEFAULT_WEAPON_HDR
 	weapon/CKnife.h
 )
 set(DEFAULT_WEAPON_SRC
+	compat/theyhunger/CWeaponAP9.cpp
 	weapon/CCrossbow.cpp
 	weapon/CCrowbar.cpp
 	weapon/CEgon.cpp

@@ -541,6 +541,7 @@ void W_Precache(void)
 	UTIL_RegisterAmmoCapacity("shock", 10);
 	UTIL_RegisterAmmoCapacity("spores", gSkillData.sk_ammo_max_spores);
 	UTIL_RegisterAmmoCapacity("uranium", gSkillData.sk_ammo_max_uranium);
+	UTIL_RegisterAmmoCapacity("ap9", 200);
 
 	UTIL_RegisterAmmo("ammo_9mmar.txt");
 	UTIL_RegisterAmmo("ammo_9mmbox.txt");
@@ -592,6 +593,7 @@ void W_Precache(void)
 	UTIL_RegisterWeapon("weapon_medkit");
 	UTIL_RegisterWeapon("weapon_inventory");
 	UTIL_RegisterWeapon("weapon_knife");
+	UTIL_RegisterWeapon("weapon_th_ap9");
 	UTIL_RegisterWeapon(NULL, "weapon_m249.txt");
 	UTIL_RegisterWeapon(NULL, "weapon_sniperrifle.txt");
 	UTIL_RegisterWeapon(NULL, "weapon_uzi.txt");
