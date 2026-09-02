@@ -13,6 +13,7 @@
 #include "pm_defs.h"
 #include "r_efx.h"
 #include "Exports.h"
+#include "../dlls/weapon/weapon_ids.h"
 
 #include <float.h>
 #include <math.h>
@@ -20,13 +21,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define WEAPON_CROWBAR 1
-#define WEAPON_CROSSBOW 6
-#define WEAPON_RPG 7
-#define WEAPON_HANDGRENADE 12
-#define WEAPON_TRIPMINE 13
-#define WEAPON_SATCHEL 14
-#define WEAPON_SNARK 15
 #define VR_POSE_SEND_INTERVAL 0.05f
 
 static vr_client_frame_t g_vrFrame;

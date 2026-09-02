@@ -19,6 +19,7 @@
 #include "ammo.h"
 #include "bullet.h"
 #include "shared_util.h"
+#include "weapon_ids.h"
 
 #ifdef CLIENT_DLL
 #include "com_weapons.h"
@@ -92,34 +93,6 @@ typedef struct
 
 EXPORT int MaxAmmoCarry(int iszName);
 EXPORT void FindHullIntersection(const Vector& vecSrc, TraceResult& tr, float* mins, float* maxs, edict_t* pEntity);
-
-#define WEAPON_NONE				0
-#define WEAPON_CROWBAR			1
-#define	WEAPON_GLOCK			2
-#define WEAPON_PYTHON			3
-#define WEAPON_MP5				4
-#define WEAPON_GRAPPLE			5
-#define WEAPON_CROSSBOW			6
-#define WEAPON_SHOTGUN			7
-#define WEAPON_RPG				8
-#define WEAPON_GAUSS			9
-#define WEAPON_EGON				10
-#define WEAPON_HORNETGUN		11
-#define WEAPON_HANDGRENADE		12
-#define WEAPON_TRIPMINE			13
-#define	WEAPON_SATCHEL			14
-#define	WEAPON_SNARK			15
-#define	WEAPON_DISPLACER		16
-#define	WEAPON_PIPEWRENCH		17
-#define	WEAPON_SHOCKRIFLE		18
-#define	WEAPON_SPORELAUNCHER	19
-#define	WEAPON_INVENTORY		20
-#define	WEAPON_MEDKIT			21
-#define	WEAPON_KNIFE			22
-
-// leaving a gap here for custom weapons that vanilla HL players can pick up (HL max weapons = 32)
-
-#define WEAPON_SUIT				31	// ?????
 
 #define WEAPON_ALLWEAPONS		(~(1ULL<<WEAPON_SUIT))
 
