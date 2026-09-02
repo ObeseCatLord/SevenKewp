@@ -95,7 +95,7 @@ extern "C" void EV_FireChaingun2(event_args_t* args)
 	EV_GetGunPosition(args, source, origin);
 	VectorCopy(forward, aiming);
 	const int bulletCount = args->bparam1 ? 4 : 2;
-	const float spread = gEngfuncs.GetMaxClients() > 1 ? 0.15f : 0.1f;
 	EV_HLDM_FireBullets(index, forward, right, up, bulletCount, source, aiming,
-		8192, BULLET_PLAYER_MP5, 0, &g_tracerCount[index - 1], spread, spread);
+		8192, BULLET_PLAYER_MP5, 0, &g_tracerCount[index - 1],
+		args->fparam1, args->fparam2);
 }
