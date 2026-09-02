@@ -14,6 +14,7 @@
 #include "r_efx.h"
 #include "Exports.h"
 #include "../dlls/weapon/weapon_ids.h"
+#include "../game_shared/compat/theyhunger/sniper.h"
 
 #include <float.h>
 #include <math.h>
@@ -262,7 +263,9 @@ void VR_Haptic( float durationMilliseconds, unsigned int hand, float amplitude )
 static void VR_UpdateScope( float bodyYaw, const Vector &weaponOffset, int stabilised )
 {
 	Vector headOffset, unusedAngles;
-	if( g_vrCurrentWeapon != WEAPON_CROSSBOW )
+	if( g_vrCurrentWeapon != WEAPON_CROSSBOW &&
+		g_vrCurrentWeapon != TH_WEAPON_SNIPER &&
+		g_vrCurrentWeapon != TH_WEAPON_TFC_SNIPER )
 	{
 		VR_ReleaseScopeButton(); g_vrScopeEngaged = 0; g_vrScopeAnglesValid = 0; CVAR_SET_FLOAT( "vr_scope_engaged", 0.0f ); return;
 	}

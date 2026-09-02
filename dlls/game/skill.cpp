@@ -198,6 +198,7 @@ skill_cvar_t skill_cvars[] = {
 
 	// Player weapons
 	DECL_SKILL_CVAR(sk_plr_crowbar, CVAR_TYPE_DAMAGE),
+	DECL_SKILL_CVAR(sk_plr_knife, CVAR_TYPE_DAMAGE),
 	DECL_SKILL_CVAR(sk_plr_9mm_bullet, CVAR_TYPE_DAMAGE),
 	DECL_SKILL_CVAR(sk_plr_357_bullet, CVAR_TYPE_DAMAGE),
 	DECL_SKILL_CVAR(sk_plr_556_bullet, CVAR_TYPE_DAMAGE),

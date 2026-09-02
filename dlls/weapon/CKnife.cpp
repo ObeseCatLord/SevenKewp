@@ -258,12 +258,12 @@ int CKnife::Swing(int fFirst)
 		if ((m_flNextPrimaryAttack + 1 <= UTIL_WeaponTimeBase()) || g_pGameRules->IsMultiplayer())
 		{
 			// first swing does full damage
-			pEntity->TraceAttack(m_pPlayer->pev, GetDamage(gSkillData.sk_plr_crowbar), gpGlobals->v_forward, &tr, DMG_CLUB);
+			pEntity->TraceAttack(m_pPlayer->pev, GetDamage(gSkillData.sk_plr_knife), gpGlobals->v_forward, &tr, DMG_CLUB);
 		}
 		else
 		{
 			// subsequent swings do half
-			pEntity->TraceAttack(m_pPlayer->pev, GetDamage(gSkillData.sk_plr_crowbar) / 2, gpGlobals->v_forward, &tr, DMG_CLUB);
+			pEntity->TraceAttack(m_pPlayer->pev, GetDamage(gSkillData.sk_plr_knife) / 2, gpGlobals->v_forward, &tr, DMG_CLUB);
 		}
 		ApplyMultiDamage(m_pPlayer->pev, m_pPlayer->pev);
 
@@ -364,9 +364,9 @@ void CKnife::CheckPhysicalSwing(float speed)
 	m_physicalHitCount += 1.0f;
 
 	ClearMultiDamage();
-	// Lambda1VR keeps knife physical damage at full strength after the velocity gate.
+	// Team Beef's physical knife attack keeps full damage after the velocity gate.
 	entity->TraceAttack(player->pev,
-		GetDamage(gSkillData.sk_plr_crowbar) / m_physicalHitCount,
+		GetDamage(gSkillData.sk_plr_knife),
 		gpGlobals->v_up, &tr, DMG_CLUB);
 	ApplyMultiDamage(player->pev, player->pev);
 

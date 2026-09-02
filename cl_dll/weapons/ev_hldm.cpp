@@ -760,6 +760,7 @@ void EV_FireMP52( event_args_t *args )
 
 	if ( EV_IsLocal( idx ) )
 	{
+		VR_Haptic( 100.0f, (unsigned int)VR_GetDominantHand(), 0.6f );
 		gEngfuncs.pEventAPI->EV_WeaponAnimation( MP5_LAUNCH, 2 );
 		V_PunchAxis( 0, -10 );
 	}
@@ -922,6 +923,7 @@ void EV_FireGauss( event_args_t *args )
 
 	if ( EV_IsLocal( idx ) )
 	{
+		VR_Haptic( 120.0f, (unsigned int)VR_GetDominantHand(), 0.5f );
 		V_PunchAxis( 0, -2.0 );
 		gEngfuncs.pEventAPI->EV_WeaponAnimation( GAUSS_FIRE2, 2 );
 
@@ -1262,6 +1264,7 @@ void EV_FireCrossbow2( event_args_t *args )
 
 	if ( EV_IsLocal( idx ) )
 	{
+		VR_Haptic( 50.0f, (unsigned int)VR_GetDominantHand(), 0.6f );
 		if ( args->iparam1 )
 			gEngfuncs.pEventAPI->EV_WeaponAnimation( CROSSBOW_FIRE1, 1 );
 		else if ( args->iparam2 )
@@ -1338,6 +1341,7 @@ void EV_FireCrossbow( event_args_t *args )
 	//Only play the weapon anims if I shot it. 
 	if ( EV_IsLocal( idx ) )
 	{
+		VR_Haptic( 50.0f, (unsigned int)VR_GetDominantHand(), 0.4f );
 		if ( args->iparam1 )
 			gEngfuncs.pEventAPI->EV_WeaponAnimation( CROSSBOW_FIRE1, 1 );
 		else if ( args->iparam2 )
@@ -1380,6 +1384,10 @@ void EV_FireRpg( event_args_t *args )
 	//Only play the weapon anims if I shot it. 
 	if ( EV_IsLocal( idx ) )
 	{
+		const unsigned int dominant = (unsigned int)VR_GetDominantHand();
+		VR_Haptic( 200.0f, dominant, 0.9f );
+		if ( VR_IsWeaponStabilised() )
+			VR_Haptic( 200.0f, dominant == VR_CLIENT_HAND_LEFT ? VR_CLIENT_HAND_RIGHT : VR_CLIENT_HAND_LEFT, 0.8f );
 		gEngfuncs.pEventAPI->EV_WeaponAnimation( RPG_FIRE2, 1 );
 	
 		V_PunchAxis( 0, -5.0 );
@@ -1453,6 +1461,8 @@ void EV_EgonFire( event_args_t *args )
 
 	if ( iStartup )
 	{
+		if ( EV_IsLocal( idx ) )
+			VR_Haptic( 1000.0f, (unsigned int)VR_GetDominantHand(), 0.5f );
 		if ( iFireMode == FIRE_WIDE )
 			gEngfuncs.pEventAPI->EV_PlaySound( idx, origin, CHAN_WEAPON, RemapFile(EGON_SOUND_STARTUP), 0.98, ATTN_NORM, 0, 125 );
 		else
@@ -1542,6 +1552,8 @@ void EV_EgonStop( event_args_t *args )
 	
 	if ( args->iparam1 )
 		 gEngfuncs.pEventAPI->EV_PlaySound( idx, origin, CHAN_WEAPON, RemapFile(EGON_SOUND_OFF), 0.98, ATTN_NORM, 0, 100 );
+	if ( EV_IsLocal( idx ) )
+		VR_Haptic( 0.0f, (unsigned int)VR_GetDominantHand(), 0.0f );
 
 	if ( EV_IsLocal( idx ) ) 
 	{
@@ -1687,6 +1699,7 @@ void EV_HornetGunFire( event_args_t *args )
 	//Only play the weapon anims if I shot it.
 	if ( EV_IsLocal( idx ) )
 	{
+		VR_Haptic( 100.0f, (unsigned int)VR_GetDominantHand(), 0.5f );
 		V_PunchAxis( 0, gEngfuncs.pfnRandomLong ( 0, 2 ) );
 		gEngfuncs.pEventAPI->EV_WeaponAnimation ( HGUN_SHOOT, 1 );
 	}
