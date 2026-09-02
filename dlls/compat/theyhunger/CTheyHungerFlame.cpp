@@ -1,5 +1,6 @@
 #include "../../extdll.h"
 #include "../../game/gamerules.h"
+#include "../../weapon/weapons.h"
 #include "CTheyHungerFlame.h"
 
 LINK_ENTITY_TO_CLASS(einar_flame, CEinarFlameRocket)
