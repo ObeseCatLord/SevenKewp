@@ -1,110 +1,9 @@
 #include "../../extdll.h"
 #include "../../weapon/weapons.h"
 #include "../../monster/CAGrunt.h"
-#include "../../monster/CApache.h"
 #include "../../monster/CBullsquid.h"
 #include "../../monster/CHeadCrab.h"
 #include "../../monster/CISlave.h"
-#include "../../monster/CScientist.h"
-
-// These are intentionally small derived entities: the stock SevenKewp AI is
-// shared, while They Hunger supplies the model, hull, faction, and tuning.
-class CEinarCivilian : public CScientist {
-public:
-	void Spawn() override {
-		if (pev->body == -1) pev->body = RANDOM_LONG(0, 4);
-		m_defaultModel = "models/civ.mdl";
-		CScientist::Spawn();
-		SetUse(&CEinarCivilian::FollowerUse);
-	}
-	void Precache() override { m_defaultModel = "models/civ.mdl"; CScientist::Precache(); }
-};
-LINK_ENTITY_TO_CLASS(einar_civ, CEinarCivilian)
-
-class CEinarDeadCivilian : public CDeadScientist {
-public:
-	void Spawn() override {
-		m_defaultModel = "models/civ.mdl";
-		if (pev->body == -1) pev->body = RANDOM_LONG(0, 4);
-		CDeadScientist::Spawn();
-	}
-};
-LINK_ENTITY_TO_CLASS(einar_civ_dead, CEinarDeadCivilian)
-
-class CEinarSittingCivilian : public CSittingScientist {
-public:
-	void Spawn() override {
-		m_defaultModel = "models/civ.mdl";
-		if (pev->body == -1) pev->body = RANDOM_LONG(0, 4);
-		CSittingScientist::Spawn();
-	}
-};
-LINK_ENTITY_TO_CLASS(einar_civ_sit, CEinarSittingCivilian)
-
-class CEinarHand : public CHeadCrab {
-public:
-	int Classify() override { return CLASS_ALIEN_MONSTER; }
-	float GetDamageAmount() override { return gSkillData.sk_headcrab_dmg_bite * 2.0f; }
-	void Spawn() override {
-		Precache();
-		SET_MODEL(edict(), "models/thehand.mdl");
-		SetSize(Vector(-12, -12, 0), Vector(12, 12, 24));
-		pev->solid = SOLID_SLIDEBOX;
-		pev->movetype = MOVETYPE_STEP;
-		SetBloodColor(BloodColorHuman());
-		pev->health = gSkillData.sk_headcrab_health * 2.0f;
-		pev->view_ofs = Vector(0, 0, 20);
-		m_flFieldOfView = 0.5f;
-		m_MonsterState = MONSTERSTATE_NONE;
-		MonsterInit();
-	}
-	void Precache() override {
-		m_defaultModel = "models/thehand.mdl";
-		CHeadCrab::Precache();
-		PRECACHE_SOUND("thehand/hnd_attack1.wav");
-		PRECACHE_SOUND("thehand/hnd_headbite.wav");
-	}
-	void AttackSound() { EMIT_SOUND(edict(), CHAN_VOICE, "thehand/hnd_attack1.wav", 1, ATTN_IDLE); }
-	void BiteSound() { EMIT_SOUND(edict(), CHAN_WEAPON, "thehand/hnd_headbite.wav", 1, ATTN_IDLE); }
-	void PainSound() override {}
-	void DeathSound() override {}
-	void AlertSound() override {}
-	void IdleSound() override {}
-	void StartAttackSound() {}
-};
-LINK_ENTITY_TO_CLASS(einar_hand, CEinarHand)
-
-class CEinarFlameRocket : public CBaseEntity {
-public:
-	void Spawn() override {
-		Precache();
-		pev->movetype = MOVETYPE_FLY;
-		pev->solid = SOLID_BBOX;
-		pev->rendermode = kRenderTransTexture;
-		pev->renderamt = 0;
-		pev->effects |= EF_DIMLIGHT;
-		SET_MODEL(edict(), "sprites/fthrow.spr");
-		UTIL_SetSize(pev, g_vecZero, g_vecZero);
-		pev->classname = MAKE_STRING("einar_flame");
-		pev->speed = g_pGameRules->IsMultiplayer() ? 500 : 400;
-		SetTouch(&CEinarFlameRocket::FlameTouch);
-		SetThink(&CBaseEntity::SUB_Remove);
-		pev->nextthink = gpGlobals->time + 1.1f;
-		UTIL_MakeVectors(pev->angles);
-		pev->velocity = gpGlobals->v_forward * pev->speed;
-	}
-	void Precache() override { PRECACHE_MODEL("sprites/fthrow.spr"); }
-	void FlameTouch(CBaseEntity* other) {
-		if (pev->watertype != CONTENTS_WATER && other->pev->takedamage) {
-			TraceResult tr = UTIL_GetGlobalTrace();
-			entvars_t* owner = pev->owner ? &pev->owner->v : pev;
-			float damage = g_pGameRules->IsMultiplayer() ? gSkillData.sk_plr_egon_wide : gSkillData.sk_plr_egon_narrow * 1.5f;
-			ClearMultiDamage(); other->TraceAttack(owner, damage * 2, pev->velocity.Normalize(), &tr, DMG_BURN); ApplyMultiDamage(owner, owner);
-		}
-		UTIL_Remove(this);
-	}
-};
-LINK_ENTITY_TO_CLASS(einar_flame, CEinarFlameRocket)
 
 class CEinarBabyKelly : public CISlave {
 public:
@@ -113,40 +12,6 @@ public:
 };
 LINK_ENTITY_TO_CLASS(monster_th_babykelly, CEinarBabyKelly)
 LINK_ENTITY_TO_CLASS(monster_babykelly, CEinarBabyKelly)
-
-class CEinarBoss : public CApache {
-public:
-	void Spawn() override { if (!pev->model) pev->model = MAKE_STRING("models/boss.mdl"); if (!pev->health) pev->health = gSkillData.sk_apache_health * 2; CApache::Spawn(); }
-	void Precache() override { if (!pev->model) pev->model = MAKE_STRING("models/boss.mdl"); CApache::Precache(); }
-	BOOL FireGun() override {
-		UTIL_MakeAimVectors(pev->angles);
-		Vector posGun, angGun; GetAttachment(1, posGun, angGun);
-		Vector target = (m_posTarget - posGun).Normalize();
-		Vector out(DotProduct(-gpGlobals->v_right, target), -DotProduct(gpGlobals->v_forward, target), DotProduct(gpGlobals->v_up, target));
-		Vector angles = UTIL_VecToAngles(out); angles.x = -angles.x;
-		if (angles.y > 180)
-			angles.y -= 360;
-		if (angles.y < -180)
-			angles.y += 360;
-		if (angles.x > 180)
-			angles.x -= 360;
-		if (angles.x < -180)
-			angles.x += 360;
-		if (angles.x > m_angGun.x) m_angGun.x = V_min(angles.x, m_angGun.x + 12);
-		if (angles.x < m_angGun.x) m_angGun.x = V_max(angles.x, m_angGun.x - 12);
-		if (angles.y > m_angGun.y) m_angGun.y = V_min(angles.y, m_angGun.y + 12);
-		if (angles.y < m_angGun.y) m_angGun.y = V_max(angles.y, m_angGun.y - 12);
-		m_angGun.y = SetBoneController(0, m_angGun.y); m_angGun.x = SetBoneController(1, m_angGun.x);
-		Vector posBarrel, angBarrel; GetAttachment(0, posBarrel, angBarrel);
-		Vector gun = (posBarrel - posGun).Normalize();
-		if (DotProduct(gun, target) > .98f && !(m_shots++ % 3)) { FireBullets(1, posGun, gun, VECTOR_CONE_4DEGREES, 8192, BULLET_MONSTER_9MM, 1); EMIT_SOUND(edict(), CHAN_WEAPON, "turret/tu_fire1.wav", 1, .3); return TRUE; }
-		if (m_shots % 3) ++m_shots; else pev->sequence = 0; return FALSE;
-	}
-private:
-	int m_shots = 0;
-};
-LINK_ENTITY_TO_CLASS(monster_th_boss, CEinarBoss)
-LINK_ENTITY_TO_CLASS(monster_boss, CEinarBoss)
 
 class CEinarChicken : public CHeadCrab {
 public:

@@ -102,6 +102,10 @@ set(MONSTER_SRC
 )
 set(MONSTER_MISC_SRC
 	compat/theyhunger/CTheyHungerEntities.cpp
+	compat/theyhunger/CTheyHungerCivilian.cpp
+	compat/theyhunger/CTheyHungerHand.cpp
+	compat/theyhunger/CTheyHungerFlame.cpp
+	compat/theyhunger/CTheyHungerBoss.cpp
 	monster/CActAnimating.cpp
 	monster/CBloater.cpp
 	env/CCorpse.cpp
