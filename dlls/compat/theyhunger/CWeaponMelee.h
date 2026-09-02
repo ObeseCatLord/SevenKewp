@@ -1,97 +1,68 @@
 #pragma once
 
-#include "../../weapon/CBasePlayerWeapon.h"
+#include "../../weapon/CCrowbar.h"
 
 #define TH_WEAPON_SHOVEL 29
 #define TH_WEAPON_SPANNER 30
 
-// Shared plumbing keeps both Team Beef weapons on SevenKewp's base weapon,
-// prediction, and VR-pose APIs; each weapon supplies its original behavior.
-class CWeaponTheyHungerMelee : public CBasePlayerWeapon {
+class CWeaponTheyHungerMelee : public CCrowbar
+{
+protected:
+	bool ExclusivePhysicalVRPose() const override { return true; }
+	float PhysicalSwingMinSpeed() const override { return 70.0f; }
+	size_t PhysicalSwingDedupeLimit() const override { return 128; }
+	bool UsesCrowbarSwingEvent() const override { return false; }
+	bool IsPhysicalBodyHit(CBaseEntity* entity) const override;
+	const char* PhysicalBodyHitSound(CBaseEntity* entity) const override;
+	bool StopPhysicalFeedbackOnKill() const override { return true; }
+	float DesktopDamage() override;
+	virtual float DesktopDamageMultiplier(bool multiplayer, bool firstSwing) const = 0;
+	void SetDesktopSwingIdle() override;
+	Vector DesktopSwingOrigin(CBasePlayer* player) const override;
+	void PrecacheTheyHungerMelee();
+
 public:
-	void Holster(int skiplocal = 0) override;
-	void ItemPostFrame() override;
-	void Smack();
-	int Swing(int firstSwing);
+	int MergedModelBody() override { return -1; }
+};
+
+class CWeaponTheyHungerShovel : public CWeaponTheyHungerMelee
+{
+public:
+	void Spawn();
+	void Precache();
+	int iItemSlot() { return 1; }
+	int GetItemInfo(ItemInfo* info);
+	BOOL Deploy();
+	void WeaponIdle() override;
+	BOOL ShouldWeaponIdle() override { return TRUE; }
 
 protected:
-	virtual int MissAnimation() = 0;
-	virtual int HitAnimation() = 0;
-	virtual int HolsterAnimation() const = 0;
-	virtual float MissDelay() const = 0;
-	virtual float HitDelay() const = 0;
-	virtual float DamageMultiplier(bool multiplayer, bool firstSwing) const = 0;
-	virtual float PhysicalLength() const = 0;
-	virtual int BodyHitVolume() const = 0;
-	virtual int WallHitVolume() const = 0;
-	virtual bool UsesSkeletonSounds() const = 0;
-	void InitializePhysicalSwingState();
-
-	int m_iSwing = 0;
-	TraceResult m_trHit;
-
-#ifndef CLIENT_DLL
-	void CheckPhysicalSwing(float speed);
-	bool HasHitEntityThisSwing(CBaseEntity* entity);
-	void RememberHitEntityThisSwing(CBaseEntity* entity);
-	void ClearPhysicalSwingState();
-	bool m_physicalSwinging = false;
-	float m_physicalLastWoosh = 0.0f;
-	float m_physicalHitCount = 0.0f;
-	EHANDLE m_physicalHitEntities[128];
-#endif
+	float PhysicalSwingReach() const override { return 24.0f; }
+	float PhysicalLivingBodyVolumeScale() const override { return 0.1f; }
+	int HolsterAnimation() const override;
+	int DesktopMissAnimation() override;
+	int DesktopHitAnimation() override;
+	float DesktopDamageMultiplier(bool multiplayer, bool firstSwing) const override;
 };
 
-class CWeaponTheyHungerShovel : public CWeaponTheyHungerMelee {
+class CWeaponTheyHungerSpanner : public CWeaponTheyHungerMelee
+{
 public:
 	void Spawn();
 	void Precache();
 	int iItemSlot() { return 1; }
-	int AddToPlayer(CBasePlayer* player);
 	int GetItemInfo(ItemInfo* info);
 	BOOL Deploy();
-	void PrimaryAttack() override;
-	void SwingAgain();
 	void WeaponIdle() override;
 	BOOL ShouldWeaponIdle() override { return TRUE; }
-	BOOL UseDecrement() override;
 
-private:
-	int MissAnimation() override;
-	int HitAnimation() override;
+protected:
+	float PhysicalSwingReach() const override { return 15.0f; }
+	float PhysicalLivingBodyVolumeScale() const override { return 1.0f; }
 	int HolsterAnimation() const override;
-	float MissDelay() const override;
-	float HitDelay() const override;
-	float DamageMultiplier(bool multiplayer, bool firstSwing) const override;
-	float PhysicalLength() const override;
-	int BodyHitVolume() const override;
-	int WallHitVolume() const override;
-	bool UsesSkeletonSounds() const override;
-};
-
-class CWeaponTheyHungerSpanner : public CWeaponTheyHungerMelee {
-public:
-	void Spawn();
-	void Precache();
-	int iItemSlot() { return 1; }
-	int AddToPlayer(CBasePlayer* player);
-	int GetItemInfo(ItemInfo* info);
-	BOOL Deploy();
-	void PrimaryAttack() override;
-	void SwingAgain();
-	void WeaponIdle() override;
-	BOOL ShouldWeaponIdle() override { return TRUE; }
-	BOOL UseDecrement() override;
-
-private:
-	int MissAnimation() override;
-	int HitAnimation() override;
-	int HolsterAnimation() const override;
-	float MissDelay() const override;
-	float HitDelay() const override;
-	float DamageMultiplier(bool multiplayer, bool firstSwing) const override;
-	float PhysicalLength() const override;
-	int BodyHitVolume() const override;
-	int WallHitVolume() const override;
-	bool UsesSkeletonSounds() const override;
+	int DesktopMissAnimation() override;
+	int DesktopHitAnimation() override;
+	float DesktopMissDelay() const override { return 0.4f; }
+	float DesktopHitDelay() const override { return 0.2f; }
+	float DesktopDamageMultiplier(bool multiplayer, bool firstSwing) const override;
 };

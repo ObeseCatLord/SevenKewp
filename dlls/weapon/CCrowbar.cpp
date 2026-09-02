@@ -35,6 +35,71 @@ enum crowbar_e {
 	CROWBAR_ATTACK3HIT
 };
 
+float CCrowbar::PhysicalSwingMinSpeed() const { return CROWBAR_MIN_PHYSICAL_SWING_SPEED; }
+float CCrowbar::PhysicalSwingReach() const { return CROWBAR_PHYSICAL_LENGTH; }
+size_t CCrowbar::PhysicalSwingDedupeLimit() const { return 32; }
+int CCrowbar::HolsterAnimation() const { return CROWBAR_HOLSTER; }
+int CCrowbar::DesktopMissAnimation() { return CROWBAR_ATTACK1MISS; }
+int CCrowbar::DesktopHitAnimation()
+{
+	switch( ((m_iSwing++) % 2) + 1 )
+	{
+	case 1: return CROWBAR_ATTACK2HIT;
+	default: return CROWBAR_ATTACK3HIT;
+	}
+}
+
+float CCrowbar::DesktopDamage()
+{
+#ifdef CLIENT_DLL
+	return 0.0f;
+#else
+	const float damage = GetDamage(gSkillData.sk_plr_crowbar);
+	return (m_flNextPrimaryAttack + 1 <= UTIL_WeaponTimeBase() ||
+		g_pGameRules->IsMultiplayer()) ? damage : damage * 0.5f;
+#endif
+}
+
+Vector CCrowbar::DesktopSwingOrigin(CBasePlayer* player) const
+{
+	return player->GetGunPosition();
+}
+
+bool CCrowbar::IsPhysicalBodyHit(CBaseEntity* entity) const
+{
+	return entity && (entity->Classify() != CLASS_NONE || entity->IsPlayerCorpse()) &&
+		!entity->IsMachine() && !entity->IsBSPModel();
+}
+
+const char* CCrowbar::PhysicalBodyHitSound(CBaseEntity*) const
+{
+	static const char* sounds[] = {
+		"weapons/cbar_hitbod1.wav",
+		"weapons/cbar_hitbod2.wav",
+		"weapons/cbar_hitbod3.wav",
+	};
+	return sounds[RANDOM_LONG(0, 2)];
+}
+
+void CCrowbar::InitializePhysicalSwingState()
+{
+	m_iSwing = 0;
+#ifndef CLIENT_DLL
+	m_physicalLastWoosh = 0.0f;
+	ClearPhysicalSwingState();
+#endif
+}
+
+void CCrowbar::PrecacheSharedMeleeSounds()
+{
+	PRECACHE_SOUND("weapons/cbar_hit1.wav");
+	PRECACHE_SOUND("weapons/cbar_hit2.wav");
+	PRECACHE_SOUND("weapons/cbar_hitbod1.wav");
+	PRECACHE_SOUND("weapons/cbar_hitbod2.wav");
+	PRECACHE_SOUND("weapons/cbar_hitbod3.wav");
+	PRECACHE_SOUND("weapons/cbar_miss1.wav");
+}
+
 
 void CCrowbar::Spawn( )
 {
@@ -46,10 +111,7 @@ void CCrowbar::Spawn( )
 	m_iClip = -1;
 
 	FallInit();// get ready to fall down.
-#ifndef CLIENT_DLL
-	m_physicalLastWoosh = 0.0f;
-	ClearPhysicalSwingState();
-#endif
+	InitializePhysicalSwingState();
 }
 
 
@@ -61,12 +123,7 @@ void CCrowbar::Precache( void )
 	m_defaultModelW = "models/w_crowbar.mdl";
 	CBasePlayerWeapon::Precache();
 
-	PRECACHE_SOUND("weapons/cbar_hit1.wav");
-	PRECACHE_SOUND("weapons/cbar_hit2.wav");
-	PRECACHE_SOUND("weapons/cbar_hitbod1.wav");
-	PRECACHE_SOUND("weapons/cbar_hitbod2.wav");
-	PRECACHE_SOUND("weapons/cbar_hitbod3.wav");
-	PRECACHE_SOUND("weapons/cbar_miss1.wav");
+	PrecacheSharedMeleeSounds();
 
 	PrecacheEvents();
 }
@@ -105,22 +162,24 @@ void CCrowbar::Holster( int skiplocal /* = 0 */ )
 	ClearPhysicalSwingState();
 #endif
 	m_pPlayer->m_flNextAttack = UTIL_WeaponTimeBase() + 0.5;
-	SendWeaponAnim( CROWBAR_HOLSTER );
+	SendWeaponAnim(HolsterAnimation());
 }
 
 void CCrowbar::ItemPostFrame()
 {
-	CBasePlayerWeapon::ItemPostFrame();
+	CBasePlayer* player = GetPlayer();
+	const bool freshPose = player && player->HasFreshVRPose();
+	if (!freshPose || !ExclusivePhysicalVRPose())
+		CBasePlayerWeapon::ItemPostFrame();
 
 #ifndef CLIENT_DLL
-	CBasePlayer* player = GetPlayer();
 	if (!player || !player->HasFreshVRPose()) {
 		ClearPhysicalSwingState();
 		return;
 	}
 
 	const float speed = player->GetWeaponVelocity().Length();
-	if (speed >= CROWBAR_MIN_PHYSICAL_SWING_SPEED) {
+	if (speed >= PhysicalSwingMinSpeed()) {
 		if (!m_physicalSwinging) {
 			if (gpGlobals->time > m_physicalLastWoosh + 0.5f) {
 				EMIT_SOUND_DYN(ENT(pev), CHAN_ITEM, "weapons/cbar_miss1.wav",
@@ -173,7 +232,7 @@ int CCrowbar::Swing( int fFirst )
 	TraceResult tr;
 
 	UTIL_MakeVectors(m_pPlayer->GetWeaponViewAngles());
-	Vector vecSrc	= m_pPlayer->GetGunPosition( );
+	Vector vecSrc	= DesktopSwingOrigin(m_pPlayer);
 	Vector vecEnd	= vecSrc + gpGlobals->v_forward * 32;
 
 #ifndef CLIENT_DLL
@@ -207,7 +266,7 @@ int CCrowbar::Swing( int fFirst )
 #endif
 
 	// disabled client prediction to stop doubling sounds/animations
-	if (fFirst) {
+	if (fFirst && UsesCrowbarSwingEvent()) {
 		PLAYBACK_EVENT_FULL(FEV_NOTHOST, m_pPlayer->edict(), m_usCrowbar,
 			0.0, (float*)&g_vecZero, (float*)&g_vecZero, 0, 0, 0,
 			0.0, 0, 0.0);
@@ -218,7 +277,15 @@ int CCrowbar::Swing( int fFirst )
 		if (fFirst)
 		{
 			// miss
-			m_flNextPrimaryAttack = GetNextAttackDelay(0.5);
+			m_flNextPrimaryAttack = GetNextAttackDelay(DesktopMissDelay());
+			if (!UsesCrowbarSwingEvent())
+			{
+				SendWeaponAnim(DesktopMissAnimation());
+#ifndef CLIENT_DLL
+				EMIT_SOUND_DYN(ENT(m_pPlayer->pev), CHAN_WEAPON, "weapons/cbar_miss1.wav",
+					1, ATTN_NORM, 0, 94 + RANDOM_LONG(0, 0xF));
+#endif
+			}
 			
 			// player "shoot" animation
 			m_pPlayer->SetAnimation( PLAYER_ATTACK1 );
@@ -226,15 +293,7 @@ int CCrowbar::Swing( int fFirst )
 	}
 	else
 	{
-		switch( ((m_iSwing++) % 2) + 1 )
-		{
-		case 0:
-			SendWeaponAnim( CROWBAR_ATTACK1HIT ); break;
-		case 1:
-			SendWeaponAnim( CROWBAR_ATTACK2HIT ); break;
-		case 2:
-			SendWeaponAnim( CROWBAR_ATTACK3HIT ); break;
-		}
+		SendWeaponAnim(DesktopHitAnimation());
 
 		// player "shoot" animation
 		m_pPlayer->SetAnimation( PLAYER_ATTACK1 );
@@ -247,18 +306,7 @@ int CCrowbar::Swing( int fFirst )
 
 		ClearMultiDamage( );
 
-		// JoshA: Changed from < -> <= to fix the full swing logic since client weapon prediction.
-		// -1.0f + 1.0f = 0.0f. UTIL_WeaponTimeBase is always 0 with client weapon prediction (0 time base vs curtime base)
-		if ( (m_flNextPrimaryAttack + 1 <= UTIL_WeaponTimeBase() ) || g_pGameRules->IsMultiplayer() )
-		{
-			// first swing does full damage
-			pEntity->TraceAttack(m_pPlayer->pev, GetDamage(gSkillData.sk_plr_crowbar), gpGlobals->v_forward, &tr, DMG_CLUB );
-		}
-		else
-		{
-			// subsequent swings do half
-			pEntity->TraceAttack(m_pPlayer->pev, GetDamage(gSkillData.sk_plr_crowbar) / 2, gpGlobals->v_forward, &tr, DMG_CLUB );
-		}	
+		pEntity->TraceAttack(m_pPlayer->pev, DesktopDamage(), gpGlobals->v_forward, &tr, DMG_CLUB );
 		ApplyMultiDamage( m_pPlayer->pev, m_pPlayer->pev );
 
 		// play thwack, smack, or dong sound
@@ -267,19 +315,11 @@ int CCrowbar::Swing( int fFirst )
 
 		if (pEntity)
 		{
-			bool suitableClass = pEntity->Classify() != CLASS_NONE || pEntity->IsPlayerCorpse();
-			if (suitableClass && !pEntity->IsMachine() && !pEntity->IsBSPModel() )
+			if (IsPhysicalBodyHit(pEntity))
 			{
 				// play thwack or smack sound
-				switch( RANDOM_LONG(0,2) )
-				{
-				case 0:
-					EMIT_SOUND(ENT(m_pPlayer->pev), CHAN_ITEM, "weapons/cbar_hitbod1.wav", 1, ATTN_NORM); break;
-				case 1:
-					EMIT_SOUND(ENT(m_pPlayer->pev), CHAN_ITEM, "weapons/cbar_hitbod2.wav", 1, ATTN_NORM); break;
-				case 2:
-					EMIT_SOUND(ENT(m_pPlayer->pev), CHAN_ITEM, "weapons/cbar_hitbod3.wav", 1, ATTN_NORM); break;
-				}
+				EMIT_SOUND(ENT(m_pPlayer->pev), CHAN_ITEM,
+					PhysicalBodyHitSound(pEntity), 1, ATTN_NORM);
 				m_pPlayer->m_iWeaponVolume = CROWBAR_BODYHIT_VOLUME;
 				if ( !pEntity->IsAlive() )
 					  return TRUE; // rapid crowbar bug :D
@@ -322,13 +362,14 @@ int CCrowbar::Swing( int fFirst )
 
 		m_pPlayer->m_iWeaponVolume = flVol * CROWBAR_WALLHIT_VOLUME;
 #endif
-		m_flNextPrimaryAttack = GetNextAttackDelay(0.25);
+		m_flNextPrimaryAttack = GetNextAttackDelay(DesktopHitDelay());
 		
 		SetThink( &CCrowbar::Smack );
 		pev->nextthink = gpGlobals->time + 0.2;
 
 		
 	}
+	SetDesktopSwingIdle();
 	return fDidHit;
 }
 
@@ -342,7 +383,7 @@ void CCrowbar::CheckPhysicalSwing(float speed)
 	TraceResult tr;
 	UTIL_MakeVectors(player->GetWeaponViewAngles());
 	const Vector src = player->GetWeaponPosition();
-	const Vector end = src + gpGlobals->v_up * CROWBAR_PHYSICAL_LENGTH;
+	const Vector end = src + gpGlobals->v_up * PhysicalSwingReach();
 	UTIL_TraceLine(src, end, dont_ignore_monsters, ENT(player->pev), &tr);
 	if (tr.fStartSolid || tr.fAllSolid || tr.flFraction >= 1.0f)
 		return;
@@ -357,23 +398,19 @@ void CCrowbar::CheckPhysicalSwing(float speed)
 	ClearMultiDamage();
 	entity->TraceAttack(player->pev,
 		GetDamage(gSkillData.sk_plr_crowbar) *
-			(speed / CROWBAR_MIN_PHYSICAL_SWING_SPEED) / m_physicalHitCount,
+			(speed / PhysicalSwingMinSpeed()) / m_physicalHitCount,
 		gpGlobals->v_up, &tr, DMG_CLUB);
 	ApplyMultiDamage(player->pev, player->pev);
 
 	float volume = 1.0f;
-	const bool bodyHit = (entity->Classify() != CLASS_NONE || entity->IsPlayerCorpse()) &&
-		!entity->IsMachine() && !entity->IsBSPModel();
+	const bool bodyHit = IsPhysicalBodyHit(entity);
 	if (bodyHit) {
-		const char* sounds[] = {
-			"weapons/cbar_hitbod1.wav",
-			"weapons/cbar_hitbod2.wav",
-			"weapons/cbar_hitbod3.wav"
-		};
-		EMIT_SOUND(ENT(player->pev), CHAN_ITEM, sounds[RANDOM_LONG(0, 2)], 1.0f, ATTN_NORM);
+		EMIT_SOUND(ENT(player->pev), CHAN_ITEM, PhysicalBodyHitSound(entity), 1.0f, ATTN_NORM);
 		player->m_iWeaponVolume = CROWBAR_BODYHIT_VOLUME;
+		if (!entity->IsAlive() && StopPhysicalFeedbackOnKill())
+			return;
 		if (entity->IsAlive())
-			volume = 0.25f;
+			volume = PhysicalLivingBodyVolumeScale();
 	}
 	else {
 		float textureVolume = TEXTURETYPE_PlaySound(&tr, src, src + (end - src) * 2.0f,
@@ -392,7 +429,9 @@ void CCrowbar::CheckPhysicalSwing(float speed)
 
 bool CCrowbar::HasHitEntityThisSwing(CBaseEntity* entity)
 {
-	for (size_t i = 0; i < ARRAYSIZE(m_physicalHitEntities); ++i) {
+	const size_t limit = PhysicalSwingDedupeLimit() < ARRAYSIZE(m_physicalHitEntities)
+		? PhysicalSwingDedupeLimit() : ARRAYSIZE(m_physicalHitEntities);
+	for (size_t i = 0; i < limit; ++i) {
 		if ((CBaseEntity*)m_physicalHitEntities[i] == entity)
 			return true;
 	}
@@ -401,7 +440,9 @@ bool CCrowbar::HasHitEntityThisSwing(CBaseEntity* entity)
 
 void CCrowbar::RememberHitEntityThisSwing(CBaseEntity* entity)
 {
-	for (size_t i = 0; i < ARRAYSIZE(m_physicalHitEntities); ++i) {
+	const size_t limit = PhysicalSwingDedupeLimit() < ARRAYSIZE(m_physicalHitEntities)
+		? PhysicalSwingDedupeLimit() : ARRAYSIZE(m_physicalHitEntities);
+	for (size_t i = 0; i < limit; ++i) {
 		if (!m_physicalHitEntities[i]) {
 			m_physicalHitEntities[i] = entity;
 			return;

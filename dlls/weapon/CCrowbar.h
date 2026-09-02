@@ -26,14 +26,36 @@ public:
 	virtual int MergedModelBody() { return MERGE_MDL_W_CROWBAR; }
 
 	virtual BOOL UseDecrement( void )
-	{ 
+	{
 #if defined( CLIENT_WEAPONS )
 		return TRUE;
 #else
 		return FALSE;
 #endif
 	}
-private:
+
+protected:
+	/* Narrow behavior hooks for compatible physical melee weapons. */
+	virtual bool ExclusivePhysicalVRPose() const { return false; }
+	virtual float PhysicalSwingMinSpeed() const;
+	virtual float PhysicalSwingReach() const;
+	virtual size_t PhysicalSwingDedupeLimit() const;
+	virtual bool UsesCrowbarSwingEvent() const { return true; }
+	virtual int HolsterAnimation() const;
+	virtual int DesktopMissAnimation();
+	virtual int DesktopHitAnimation();
+	virtual float DesktopMissDelay() const { return 0.5f; }
+	virtual float DesktopHitDelay() const { return 0.25f; }
+	virtual float DesktopDamage();
+	virtual void SetDesktopSwingIdle() {}
+	virtual Vector DesktopSwingOrigin(CBasePlayer* player) const;
+	virtual bool IsPhysicalBodyHit(CBaseEntity* entity) const;
+	virtual const char* PhysicalBodyHitSound(CBaseEntity* entity) const;
+	virtual float PhysicalLivingBodyVolumeScale() const { return 0.25f; }
+	virtual bool StopPhysicalFeedbackOnKill() const { return false; }
+	void InitializePhysicalSwingState();
+	void PrecacheSharedMeleeSounds();
+
 	unsigned short m_usCrowbar;
 #ifndef CLIENT_DLL
 	void CheckPhysicalSwing( float speed );
@@ -43,6 +65,6 @@ private:
 	bool m_physicalSwinging;
 	float m_physicalHitCount;
 	float m_physicalLastWoosh;
-	EHANDLE m_physicalHitEntities[32];
+	EHANDLE m_physicalHitEntities[128];
 #endif
 };
