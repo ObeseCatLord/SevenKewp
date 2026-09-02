@@ -187,6 +187,8 @@ void CBasePlayerWeapon::ItemPostFrame(void)
 		m_flLastFireTime = 0.0f;
 	}
 
+	ToggleScope((m_pPlayer->pev->button & IN_ALT1) != 0);
+
 	if ((m_pPlayer->pev->button & IN_ATTACK2) && CanAttack(m_flNextSecondaryAttack, gpGlobals->time, UseDecrement()))
 	{
 		if (pszAmmo2() && !m_pPlayer->m_rgAmmo[SecondaryAmmoIndex()])

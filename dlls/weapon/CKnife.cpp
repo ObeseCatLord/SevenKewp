@@ -366,7 +366,7 @@ void CKnife::CheckPhysicalSwing(float speed)
 	ClearMultiDamage();
 	// Team Beef's physical knife attack keeps full damage after the velocity gate.
 	entity->TraceAttack(player->pev,
-		GetDamage(gSkillData.sk_plr_knife),
+		GetDamage(gSkillData.sk_plr_knife) / m_physicalHitCount,
 		gpGlobals->v_up, &tr, DMG_CLUB);
 	ApplyMultiDamage(player->pev, player->pev);
 

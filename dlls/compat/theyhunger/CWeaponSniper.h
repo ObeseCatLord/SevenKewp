@@ -11,6 +11,7 @@ public:
   void Holster(int = 0);
   void PrimaryAttack();
   void SecondaryAttack();
+  void ToggleScope(BOOL engage) override;
   void Reload();
   void WeaponIdle();
   BOOL ShouldWeaponIdle() { return TRUE; }
@@ -38,6 +39,7 @@ public:
   void Holster(int = 0);
   void PrimaryAttack();
   void SecondaryAttack();
+  void ToggleScope(BOOL engage) override;
   void Reload();
   void WeaponIdle();
   BOOL ShouldWeaponIdle() { return TRUE; }

@@ -473,6 +473,17 @@ void CCrossbow::SecondaryAttack()
 	m_flNextSecondaryAttack = UTIL_WeaponTimeBase() + 1.0;
 }
 
+void CCrossbow::ToggleScope(BOOL engage)
+{
+	CBasePlayer* player = GetPlayer();
+	if (!player)
+		return;
+
+	const BOOL zoomed = player->pev->fov != 0;
+	if ((engage && !zoomed) || (!engage && zoomed))
+		SecondaryAttack();
+}
+
 
 void CCrossbow::Reload( void )
 {

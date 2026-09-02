@@ -40,6 +40,7 @@ public:
 	void FireSniperBolt( void );
 	void PrimaryAttack( void );
 	void SecondaryAttack( void );
+	void ToggleScope( BOOL engage ) override;
 	BOOL Deploy( );
 	void Holster( int skiplocal = 0 );
 	void Reload( void );

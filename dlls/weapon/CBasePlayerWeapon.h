@@ -43,6 +43,7 @@ public:
 	// called by CBasePlayerWeapons ItemPostFrame()
 	virtual void PrimaryAttack( void ) {}				// do "+ATTACK"
 	virtual void SecondaryAttack( void ) {}			// do "+ATTACK2"
+	virtual void ToggleScope( BOOL engage ) {}          // hold-to-scope VR input
 	virtual void TertiaryAttack( void ) {}
 	virtual void Reload( void ) {}						// do "+RELOAD"
 	virtual void WeaponIdle( void ) {}					// called when no buttons pressed

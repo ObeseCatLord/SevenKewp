@@ -148,6 +148,10 @@ void CWeaponTheyHungerSniper::PrimaryAttack() {
   Fire(this, m_fireEvent, m_inZoom);
 }
 void CWeaponTheyHungerSniper::SecondaryAttack() { Zoom(this, m_inZoom); }
+void CWeaponTheyHungerSniper::ToggleScope(BOOL engage) {
+  if ((engage != FALSE) != (m_inZoom != 0))
+    Zoom(this, m_inZoom);
+}
 void CWeaponTheyHungerSniper::Reload() {
   CBasePlayer *p = GetPlayer();
   if (p && p->m_rgAmmo[m_iPrimaryAmmoType] > 0 &&
@@ -201,6 +205,10 @@ void CWeaponTheyHungerTFCSniper::PrimaryAttack() {
   Fire(this, m_fireEvent, m_inZoom);
 }
 void CWeaponTheyHungerTFCSniper::SecondaryAttack() { Zoom(this, m_inZoom); }
+void CWeaponTheyHungerTFCSniper::ToggleScope(BOOL engage) {
+  if ((engage != FALSE) != (m_inZoom != 0))
+    Zoom(this, m_inZoom);
+}
 void CWeaponTheyHungerTFCSniper::Reload() {
   CBasePlayer *p = GetPlayer();
   if (p && p->m_rgAmmo[m_iPrimaryAmmoType] > 0 &&
