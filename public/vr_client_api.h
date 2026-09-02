@@ -1,6 +1,11 @@
 /*
 vr_client_api.h - optional VR client-DLL ABI
 Copyright (C) 2026 Xash3D FWGS contributors
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
 */
 
 #ifndef VR_CLIENT_API_H
@@ -30,18 +35,24 @@ extern "C"
 #define VR_CLIENT_HAND_RIGHT 1u
 #define VR_CLIENT_MAX_HANDS  2u
 
+/* vr_client_frame_t flags */
 #define VR_CLIENT_FRAME_ACTIVE      ( 1u << 0 )
 #define VR_CLIENT_FRAME_FOCUSED     ( 1u << 1 )
 #define VR_CLIENT_FRAME_HEAD_VALID  ( 1u << 2 )
 
+/* vr_client_hand_t flags */
 #define VR_CLIENT_HAND_GRIP_VALID ( 1u << 0 )
 #define VR_CLIENT_HAND_AIM_VALID  ( 1u << 1 )
 
+/* vr_client_hand_t buttons */
 #define VR_CLIENT_BUTTON_PRIMARY   ( 1u << 0 )
 #define VR_CLIENT_BUTTON_SECONDARY ( 1u << 1 )
 #define VR_CLIENT_BUTTON_MENU      ( 1u << 2 )
 #define VR_CLIENT_BUTTON_STICK     ( 1u << 3 )
 
+/* Position is in game units and the orthonormal basis is dimensionless. Both
+ * use Xash coordinates and are expressed relative to the recenter transform.
+ * Velocities use the same recentered basis. */
 typedef struct vr_client_pose_s
 {
 	float position[3];
@@ -110,6 +121,7 @@ typedef struct vr_client_api_s
 	vr_client_build_usercmd_sidecar_t BuildUsercmdSidecar;
 } vr_client_api_t;
 
+/* Return nonzero only after writing a compatible vr_client_api_t. */
 typedef int32_t (VR_CLIENT_CALL *vr_client_get_api_t)( const vr_client_engine_api_t *engine, vr_client_api_t *client );
 
 #define VR_CLIENT_ENGINE_API_MIN_SIZE ( offsetof( vr_client_engine_api_t, Haptic ) + sizeof( vr_client_haptic_t ))
@@ -117,6 +129,8 @@ typedef int32_t (VR_CLIENT_CALL *vr_client_get_api_t)( const vr_client_engine_ap
 #define VR_CLIENT_API_SIDECAR_SIZE ( offsetof( vr_client_api_t, BuildUsercmdSidecar ) + sizeof( vr_client_build_usercmd_sidecar_t ))
 #define VR_CLIENT_USERCMD_MIN_SIZE ( offsetof( vr_client_usercmd_t, frametime ) + sizeof( float ))
 
+/* The public ABI is intentionally independent of engine, renderer, and
+ * OpenXR headers. Keep these i386 Linux checks when extending v2. */
 #if defined( __linux__ ) && UINTPTR_MAX == UINT32_MAX
 #define VR_CLIENT_STATIC_ASSERT( name, expression ) typedef char vr_client_static_assert_ ## name[( expression ) ? 1 : -1]
 VR_CLIENT_STATIC_ASSERT( pose_size, sizeof( vr_client_pose_t ) == 48 );

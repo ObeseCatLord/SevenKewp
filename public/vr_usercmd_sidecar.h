@@ -13,7 +13,7 @@ vr_usercmd_sidecar.h - ABI-neutral VR usercmd extension
 #define VR_USERCMD_SIDECAR_POSE_VALID   ( 1u << 1 )
 #define VR_USERCMD_SIDECAR_WIRE_BYTES 35u
 
-/* This record is never embedded in usercmd_t or playermove_t. Position
+/* This record is never embedded in usercmd_t or playermove_t.  Position
  * values are relative to the player's eye at 1/8 game-unit precision;
  * angles use degrees at 1/128 precision. */
 typedef struct vr_usercmd_sidecar_s
@@ -45,6 +45,26 @@ static inline int16_t VR_UsercmdSidecarQuantize( float value, float scale )
 	if( quantized <= -32768.0 )
 		return -32768;
 	return (int16_t)quantized;
+}
+
+/* Preserve transport-owned ladder fields when a client DLL supplies pose. */
+static inline void VR_UsercmdSidecarApplyPose( vr_usercmd_sidecar_t *sample, const vr_usercmd_sidecar_t *pose )
+{
+	int index;
+
+	if( !sample || !pose || pose->version != VR_USERCMD_SIDECAR_VERSION ||
+		!( pose->flags & VR_USERCMD_SIDECAR_POSE_VALID ))
+		return;
+	for( index = 0; index < 3; ++index )
+	{
+		sample->weapon_position[index] = pose->weapon_position[index];
+		sample->weapon_angles[index] = pose->weapon_angles[index];
+		sample->weapon_velocity[index] = pose->weapon_velocity[index];
+		sample->offhand_position[index] = pose->offhand_position[index];
+		sample->offhand_angles[index] = pose->offhand_angles[index];
+	}
+	sample->version = VR_USERCMD_SIDECAR_VERSION;
+	sample->flags |= VR_USERCMD_SIDECAR_POSE_VALID;
 }
 
 #define VR_USERCMD_SIDECAR_BEGIN_PM_EXPORT "VR_BeginPMUsercmdSidecar"
