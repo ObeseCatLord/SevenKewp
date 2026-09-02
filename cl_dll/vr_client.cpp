@@ -181,6 +181,9 @@ static void VR_SendPoseUpdate( ref_params_s *params, const Vector &weaponPositio
 {
 	char command[256];
 	int length;
+	if( g_vrEngineAPI.struct_size >= VR_CLIENT_ENGINE_API_NEGOTIATION_SIZE &&
+		g_vrEngineAPI.IsUsercmdSidecarNegotiated && g_vrEngineAPI.IsUsercmdSidecarNegotiated() )
+		return;
 	if( !params || !gEngfuncs.pfnClientCmd || params->time < g_vrNextPoseSendTime ||
 		!VR_IsFiniteVector( weaponPosition ) || !VR_IsFiniteVector( weaponAngles ) ||
 		!VR_IsFiniteVector( weaponVelocity ) || !VR_IsFiniteVector( offhandPosition ) ||
@@ -416,11 +419,15 @@ static int32_t VR_CLIENT_CALL VR_BuildUsercmdSidecar( const vr_client_usercmd_t 
 extern "C" int VR_CLIENT_CALL CL_DLLEXPORT HUD_GetVRClientAPI( const vr_client_engine_api_t *enginefuncs, vr_client_api_t *callbacks )
 {
 	uint32_t writableSize;
+	uint32_t engineSize;
 	if( !enginefuncs || !callbacks || enginefuncs->version != VR_CLIENT_API_VERSION || enginefuncs->struct_size < VR_CLIENT_ENGINE_API_MIN_SIZE ) return 0;
 	writableSize = callbacks->struct_size ? callbacks->struct_size : VR_CLIENT_API_MIN_SIZE;
 	if( writableSize < VR_CLIENT_API_MIN_SIZE ) return 0;
 	if( writableSize > sizeof( *callbacks ) ) writableSize = sizeof( *callbacks );
-	memset( &g_vrEngineAPI, 0, sizeof( g_vrEngineAPI ) ); memcpy( &g_vrEngineAPI, enginefuncs, sizeof( g_vrEngineAPI ) );
+	memset( &g_vrEngineAPI, 0, sizeof( g_vrEngineAPI ) );
+	engineSize = enginefuncs->struct_size;
+	if( engineSize > sizeof( g_vrEngineAPI ) ) engineSize = sizeof( g_vrEngineAPI );
+	memcpy( &g_vrEngineAPI, enginefuncs, engineSize );
 	memset( callbacks, 0, writableSize ); callbacks->version = VR_CLIENT_API_VERSION; callbacks->struct_size = writableSize; callbacks->Frame = VR_ClientFrame; callbacks->Shutdown = VR_ClientShutdown;
 	if( writableSize >= VR_CLIENT_API_SIDECAR_SIZE ) callbacks->BuildUsercmdSidecar = VR_BuildUsercmdSidecar;
 	return 1;
