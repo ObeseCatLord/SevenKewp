@@ -7256,19 +7256,8 @@ void CBasePlayer::HandleClientCvarResponse(int requestID, const char* pszCvarNam
 
 		// all queries finished
 
-		if (hasCvar[CVAR_REQ_SEVENKEWP] + hasCvar[CVAR_REQ_BUGFIXEDHL] + hasCvar[CVAR_REQ_ADRENALINE_GAMER] > 1) {
-			std::string clientStr;
-			if (hasCvar[CVAR_REQ_SEVENKEWP])
-				clientStr += "SevenKewp. ";
-			if (hasCvar[CVAR_REQ_BUGFIXEDHL])
-				clientStr += "BHL, ";
-			if (hasCvar[CVAR_REQ_ADRENALINE_GAMER])
-				clientStr += "AG, ";
-			clientStr = clientStr.substr(0, clientStr.size() - 2);
-			ALERT(at_error, "Client detection error. Client has cvars from multiple clients: %s\n", clientStr.c_str());
-		}
-		else if (hasCvar[CVAR_REQ_SEVENKEWP]) {
-			m_sevenkewpVersion = atoi(STRING(m_queryResults[CVAR_REQ_SEVENKEWP]));
+		m_sevenkewpVersion = atoi(STRING(m_queryResults[CVAR_REQ_SEVENKEWP]));
+		if (hasCvar[CVAR_REQ_SEVENKEWP] && m_sevenkewpVersion > 0) {
 			m_clientModVersion = CLIENT_MOD_SEVENKEWP;
 			m_clientModVersionString = ALLOC_STRING(UTIL_SevenKewpClientString(m_sevenkewpVersion));
 		}
