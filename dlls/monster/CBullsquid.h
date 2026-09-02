@@ -35,6 +35,7 @@ public:
 	void Spawn( void );
 
 	static void Shoot( entvars_t *pevOwner, Vector vecStart, Vector vecVelocity );
+	static void Shoot( entvars_t *pevOwner, Vector vecStart, Vector vecVelocity, int spitSize );
 	void Touch( CBaseEntity *pOther );
 	void Animate( void );
 	const char* GetDeathNoticeWeapon() { return "weapon_crowbar"; }

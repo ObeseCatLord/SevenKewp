@@ -68,7 +68,7 @@ public:
 	void AlertSound(void);
 	void DeathSound(void);
 	void PainSound(void);
-	void AttackSound(void);
+	virtual void AttackSound(void);
 	void PrescheduleThink(void);
 	void TraceAttack(entvars_t* pevAttacker, float flDamage, Vector vecDir, TraceResult* ptr, int bitsDamageType);
 	int IRelationship(CBaseEntity* pTarget);

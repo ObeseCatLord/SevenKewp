@@ -79,6 +79,11 @@ void CSquidSpit::Animate( void )
 
 void CSquidSpit::Shoot( entvars_t *pevOwner, Vector vecStart, Vector vecVelocity )
 {
+	Shoot(pevOwner, vecStart, vecVelocity, 1);
+}
+
+void CSquidSpit::Shoot( entvars_t *pevOwner, Vector vecStart, Vector vecVelocity, int spitSize )
+{
 	CSquidSpit *pSpit = GetClassPtr( (CSquidSpit *)NULL );
 	pSpit->Spawn();
 	
@@ -89,6 +94,7 @@ void CSquidSpit::Shoot( entvars_t *pevOwner, Vector vecStart, Vector vecVelocity
 	pSpit->SetThink ( &CSquidSpit::Animate );
 	pSpit->pev->nextthink = gpGlobals->time + 0.1;
 	pSpit->ParametricInterpolation(0.1f);
+	pSpit->pev->scale *= spitSize;
 }
 
 void CSquidSpit :: Touch ( CBaseEntity *pOther )
@@ -115,7 +121,7 @@ void CSquidSpit :: Touch ( CBaseEntity *pOther )
 	}
 	else
 	{
-		pOther->TakeDamage ( pev, &pev->owner->v, gSkillData.sk_bullsquid_dmg_spit, DMG_GENERIC );
+		pOther->TakeDamage ( pev, &pev->owner->v, gSkillData.sk_bullsquid_dmg_spit * pev->scale * 2, DMG_GENERIC );
 	}
 
 	SetThink ( &CSquidSpit::SUB_Remove );
@@ -1146,4 +1152,3 @@ MONSTERSTATE CBullsquid :: GetIdealState ( void )
 
 	return m_IdealMonsterState;
 }
-

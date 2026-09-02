@@ -101,7 +101,9 @@ set(MONSTER_SRC
 	monster/nodes.cpp
 )
 set(MONSTER_MISC_SRC
-	compat/theyhunger/CTheyHungerEntities.cpp
+	compat/theyhunger/CTheyHungerCyberFranklin.cpp
+	compat/theyhunger/CTheyHungerMegasquid.cpp
+	compat/theyhunger/CTheyHungerZombieBull.cpp
 	compat/theyhunger/CTheyHungerBabyKelly.cpp
 	compat/theyhunger/CTheyHungerChicken.cpp
 	compat/theyhunger/CTheyHungerCivilian.cpp
