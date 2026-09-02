@@ -298,7 +298,8 @@ static int VR_ResolveWeaponPose( float bodyYaw, float frametime, vr_weapon_pose_
 	pose->supportOffset = pose->weaponOffset; pose->supportAngles = pose->weaponAngles;
 	if( support->flags & VR_CLIENT_HAND_AIM_VALID ) VR_TransformPose( support->aim, bodyYaw, pose->supportOffset, pose->supportAngles );
 	const float separation = ( pose->supportOffset - pose->weaponOffset ).Length();
-	pose->stabilised = ( support->flags & VR_CLIENT_HAND_AIM_VALID ) && support->squeeze >= 0.7f && separation > scale * 0.15f && separation < scale * 0.50f;
+	pose->stabilised = ( support->flags & VR_CLIENT_HAND_AIM_VALID ) &&
+		( support->flags & VR_CLIENT_HAND_SQUEEZE_PRESSED ) && separation > scale * 0.15f && separation < scale * 0.50f;
 	CVAR_SET_FLOAT( "vr_weapon_stabilised", pose->stabilised ? 1.0f : 0.0f );
 	if( pose->stabilised ) VectorAngles( pose->supportOffset - pose->weaponOffset, pose->weaponAngles );
 	if( g_vrCurrentWeapon == WEAPON_CROWBAR ) pose->weaponAngles[PITCH] += CVAR_GET_FLOAT( "vr_crowbar_pitchadjust" );
