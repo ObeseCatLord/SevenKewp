@@ -1185,7 +1185,7 @@ bool CStudioModelRenderer::IsFullBrightSubModel(mstudiomodel_t* m_pSubModel, int
 
 	for (int k = 0; k < m_pSubModel->nummesh; k++) {		
 		short remappedSkin = skins[skin * m_pStudioHeader->numskinref + meshes[k].skinref];
-		clamp(remappedSkin, 0, m_pStudioHeader->numtextures - 1);
+		remappedSkin = clamp(remappedSkin, 0, m_pStudioHeader->numtextures - 1);
 
 		if (!(textures[remappedSkin].flags & STUDIO_NF_FULLBRIGHT)) {
 			return false;
@@ -1966,7 +1966,7 @@ void CStudioModelRenderer::StudioRenderFinal(bool mirrored)
 			if (mirrored)
 				glDisable(GL_CULL_FACE);
 
-			bool fullbright = IsFullBrightSubModel(*m_pSubModel, m_pCurrentEntity->curstate.skin);
+			bool fullbright = IsFullBrightSubModel(m_pSubModel, m_pCurrentEntity->curstate.skin);
 
 			if (fullbright) {
 				IEngineStudio.StudioSetupLighting(&g_fullbright_alight);
@@ -2004,4 +2004,3 @@ void CStudioModelRenderer::UpdateLocalPlayerLightLevel(alight_t& alight) {
 	gPlayerSim.light_color.g = gPlayerSim.light_level * alight.color.y;
 	gPlayerSim.light_color.b = gPlayerSim.light_level * alight.color.z;
 }
-

@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2002, Valve LLC, All rights reserved. ============
+//========= Copyright Â© 1996-2002, Valve LLC, All rights reserved. ============
 //
 // Purpose: 
 //
@@ -149,8 +149,8 @@ public:
 	studiohdr_t		*m_pStudioHeader;
 	
 	// Pointers to current body part and submodel
-	mstudiobodyparts_t **m_pBodyPart;
-	mstudiomodel_t	**m_pSubModel;
+	mstudiobodyparts_t *m_pBodyPart;
+	mstudiomodel_t	*m_pSubModel;
 
 	// Palette substition for top and bottom of model
 	int				m_nTopColor;			
