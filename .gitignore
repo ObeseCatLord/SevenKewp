@@ -5,6 +5,7 @@
 !utils/vgui/lib/win32_vc6/vgui.lib
 /build
 /build-xash-audit
+/build-usercmd-sidecar-i386
 /halflife-op4-dev
 /compatible_maps
 /hlcoop_install
