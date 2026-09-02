@@ -9,6 +9,9 @@
 
 class EXPORT CApache : public CBaseMonster
 {
+	// They Hunger's boss is an Apache variant and overrides its gun behavior.
+	// Keep this extension point protected rather than duplicating Apache AI.
+protected:
 	virtual int	ObjectCaps(void) { return CBaseMonster::ObjectCaps() & ~FCAP_IMPULSE_USE; }
 	int		Save( CSave &save );
 	int		Restore( CRestore &restore );
@@ -42,7 +45,7 @@ class EXPORT CApache : public CBaseMonster
 	void ShowDamage( void );
 	void Flight( void );
 	void FireRocket( void );
-	BOOL FireGun( void );
+	virtual BOOL FireGun( void );
 	
 	int  TakeDamage( entvars_t* pevInflictor, entvars_t* pevAttacker, float flDamage, int bitsDamageType );
 	void TraceAttack( entvars_t *pevAttacker, float flDamage, Vector vecDir, TraceResult *ptr, int bitsDamageType);

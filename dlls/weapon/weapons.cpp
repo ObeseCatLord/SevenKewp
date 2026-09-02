@@ -601,6 +601,8 @@ void W_Precache(void)
 	UTIL_RegisterWeapon("weapon_einar1");
 	UTIL_RegisterWeapon("weapon_th_chaingun");
 	UTIL_RegisterWeapon("weapon_th_medkit");
+	UTIL_RegisterWeapon("weapon_th_shovel");
+	UTIL_RegisterWeapon("weapon_th_spanner");
 	UTIL_RegisterWeapon(NULL, "weapon_m249.txt");
 	UTIL_RegisterWeapon(NULL, "weapon_sniperrifle.txt");
 	UTIL_RegisterWeapon(NULL, "weapon_uzi.txt");

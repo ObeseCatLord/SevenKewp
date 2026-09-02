@@ -443,6 +443,7 @@ set(DEFAULT_WEAPON_HDR
 	compat/theyhunger/CWeaponTaurus.h
 	compat/theyhunger/CWeaponSniper.h
 	compat/theyhunger/CWeaponSupport.h
+	compat/theyhunger/CWeaponMelee.h
 	weapon/CShockBeam.h
 	weapon/CGrapple.h
 	weapon/CGrappleTip.h
@@ -474,6 +475,7 @@ set(DEFAULT_WEAPON_SRC
 	compat/theyhunger/CWeaponTaurus.cpp
 	compat/theyhunger/CWeaponSniper.cpp
 	compat/theyhunger/CWeaponSupport.cpp
+	compat/theyhunger/CWeaponMelee.cpp
 	weapon/CCrossbow.cpp
 	weapon/CCrowbar.cpp
 	weapon/CEgon.cpp

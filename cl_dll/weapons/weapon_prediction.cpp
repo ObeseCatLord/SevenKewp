@@ -45,6 +45,7 @@
 #include "../dlls/compat/theyhunger/CWeaponTaurus.h"
 #include "../dlls/compat/theyhunger/CWeaponSniper.h"
 #include "../dlls/compat/theyhunger/CWeaponSupport.h"
+#include "../dlls/compat/theyhunger/CWeaponMelee.h"
 #include "../game_shared/compat/theyhunger/taurus.h"
 #include "../game_shared/compat/theyhunger/sniper.h"
 #include "../dlls/weapon/custom/CWeaponCustom.h"
@@ -113,6 +114,8 @@ CWeaponTheyHungerSniper g_Sniper;
 CWeaponTheyHungerTFCSniper g_TFCSniper;
 CWeaponTheyHungerChaingun g_TheyHungerChaingun;
 CWeaponTheyHungerMedkit g_TheyHungerMedkit;
+CWeaponTheyHungerShovel g_TheyHungerShovel;
+CWeaponTheyHungerSpanner g_TheyHungerSpanner;
 CWeaponCustom g_customWeapon[MAX_WEAPONS];
 
 ModPlayerState g_modPlayerStates[32];
@@ -435,6 +438,8 @@ CBasePlayerWeapon* GetPredictedWeapon(int id) {
 	case TH_WEAPON_TFC_SNIPER: return &g_TFCSniper;
 	case TH_WEAPON_CHAINGUN: return &g_TheyHungerChaingun;
 	case TH_WEAPON_MEDKIT: return &g_TheyHungerMedkit;
+	case TH_WEAPON_SHOVEL: return &g_TheyHungerShovel;
+	case TH_WEAPON_SPANNER: return &g_TheyHungerSpanner;
 	default:
 		if (id >= 0 && id < MAX_WEAPONS)
 			return &g_customWeapon[id];

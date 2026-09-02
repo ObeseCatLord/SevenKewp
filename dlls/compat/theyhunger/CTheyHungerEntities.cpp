@@ -114,11 +114,36 @@ public:
 LINK_ENTITY_TO_CLASS(monster_th_babykelly, CEinarBabyKelly)
 LINK_ENTITY_TO_CLASS(monster_babykelly, CEinarBabyKelly)
 
-class CEinarBoss : public CBaseMonster {
+class CEinarBoss : public CApache {
 public:
-	int Classify() override { return CLASS_MACHINE; }
-	void Spawn() override { Precache(); SET_MODEL(edict(), "models/boss.mdl"); UTIL_SetSize(pev, Vector(-32, -32, -64), Vector(32, 32, 0)); pev->movetype = MOVETYPE_FLY; pev->solid = SOLID_SLIDEBOX; pev->health = pev->health ? pev->health : gSkillData.sk_apache_health * 2; MonsterInit(); }
-	void Precache() override { PRECACHE_MODEL("models/boss.mdl"); }
+	void Spawn() override { if (!pev->model) pev->model = MAKE_STRING("models/boss.mdl"); if (!pev->health) pev->health = gSkillData.sk_apache_health * 2; CApache::Spawn(); }
+	void Precache() override { if (!pev->model) pev->model = MAKE_STRING("models/boss.mdl"); CApache::Precache(); }
+	BOOL FireGun() override {
+		UTIL_MakeAimVectors(pev->angles);
+		Vector posGun, angGun; GetAttachment(1, posGun, angGun);
+		Vector target = (m_posTarget - posGun).Normalize();
+		Vector out(DotProduct(-gpGlobals->v_right, target), -DotProduct(gpGlobals->v_forward, target), DotProduct(gpGlobals->v_up, target));
+		Vector angles = UTIL_VecToAngles(out); angles.x = -angles.x;
+		if (angles.y > 180)
+			angles.y -= 360;
+		if (angles.y < -180)
+			angles.y += 360;
+		if (angles.x > 180)
+			angles.x -= 360;
+		if (angles.x < -180)
+			angles.x += 360;
+		if (angles.x > m_angGun.x) m_angGun.x = V_min(angles.x, m_angGun.x + 12);
+		if (angles.x < m_angGun.x) m_angGun.x = V_max(angles.x, m_angGun.x - 12);
+		if (angles.y > m_angGun.y) m_angGun.y = V_min(angles.y, m_angGun.y + 12);
+		if (angles.y < m_angGun.y) m_angGun.y = V_max(angles.y, m_angGun.y - 12);
+		m_angGun.y = SetBoneController(0, m_angGun.y); m_angGun.x = SetBoneController(1, m_angGun.x);
+		Vector posBarrel, angBarrel; GetAttachment(0, posBarrel, angBarrel);
+		Vector gun = (posBarrel - posGun).Normalize();
+		if (DotProduct(gun, target) > .98f && !(m_shots++ % 3)) { FireBullets(1, posGun, gun, VECTOR_CONE_4DEGREES, 8192, BULLET_MONSTER_9MM, 1); EMIT_SOUND(edict(), CHAN_WEAPON, "turret/tu_fire1.wav", 1, .3); return TRUE; }
+		if (m_shots % 3) ++m_shots; else pev->sequence = 0; return FALSE;
+	}
+private:
+	int m_shots = 0;
 };
 LINK_ENTITY_TO_CLASS(monster_th_boss, CEinarBoss)
 LINK_ENTITY_TO_CLASS(monster_boss, CEinarBoss)
