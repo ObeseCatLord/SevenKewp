@@ -24,6 +24,7 @@
 #include "eventscripts.h"
 #include "event_api.h"
 #include "pm_shared.h"
+#include "../vr_client.h"
 
 #define IS_FIRSTPERSON_SPEC ( g_iUser1 == OBS_IN_EYE || (g_iUser1 && (gHUD.m_Spectator.m_pip->value == INSET_IN_EYE)) )
 /*
@@ -112,7 +113,7 @@ Figure out the height of the gun
 */
 void EV_GetGunPosition( int idx, bool ducking, float *pos, float *origin )
 {
-	if ( EV_IsLocal( idx ) )
+	if ( VR_IsActive() && EV_IsLocal( idx ) )
 	{
 		cl_entity_t *viewmodel = GetViewEntity();
 		if ( viewmodel )
@@ -198,7 +199,7 @@ void EV_GetDefaultShellInfo( event_args_t *args, float *origin, float *velocity,
 
 	fR = gEngfuncs.pfnRandomFloat( 50, 70 );
 	fU = gEngfuncs.pfnRandomFloat( 100, 150 );
-	if ( EV_IsLocal( idx ) )
+	if ( VR_IsActive() && EV_IsLocal( idx ) )
 	{
 		cl_entity_t *viewmodel = GetViewEntity();
 		if ( viewmodel )
