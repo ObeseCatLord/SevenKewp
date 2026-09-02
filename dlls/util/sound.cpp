@@ -66,10 +66,22 @@ static XashTargetedSoundV1Fn GetXashTargetedSoundV1()
 	// module without loading an arbitrary library; dedicated Xash is an
 	// executable and is resolved by the NULL handle below.
 	void *engineModule = dlopen( "libxash.so", RTLD_NOW | RTLD_NOLOAD );
-	if( !engineModule )
-		engineModule = dlopen( NULL, RTLD_NOW );
 	if( engineModule )
+	{
+		// RTLD_NOLOAD still acquires a reference. The launcher owns the engine
+		// module for the game-DLL lifetime, so the resolved address remains valid
+		// after releasing this temporary lookup reference.
 		targetSound = (XashTargetedSoundV1Fn)dlsym( engineModule, "SV_TargetedSoundV1" );
+		dlclose( engineModule );
+	}
+	else
+	{
+		// dlopen(NULL) is a main-program pseudo-handle, not an owned module
+		// reference, so it must not be passed to dlclose.
+		engineModule = dlopen( NULL, RTLD_NOW );
+		if( engineModule )
+			targetSound = (XashTargetedSoundV1Fn)dlsym( engineModule, "SV_TargetedSoundV1" );
+	}
 #endif
 
 	return targetSound;
