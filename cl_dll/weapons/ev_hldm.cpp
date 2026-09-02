@@ -76,6 +76,7 @@ void EV_SnarkFire( struct event_args_s *args  );
 
 
 void EV_TrainPitchAdjust( struct event_args_s *args );
+void EV_GetWeaponEventPose( struct event_args_s *args, float *origin, float *angles, float *velocity );
 }
 
 #define VECTOR_CONE_1DEGREES Vector( 0.00873, 0.00873, 0.00873 )
@@ -491,9 +492,7 @@ void EV_FireGlock1( event_args_t *args )
 	vec3_t up, right, forward;
 	
 	idx = args->entindex;
-	VectorCopy( args->origin, origin );
-	VectorCopy( args->angles, angles );
-	VectorCopy( args->velocity, velocity );
+	EV_GetWeaponEventPose( args, origin, angles, velocity );
 
 	empty = args->bparam1;
 	AngleVectors( angles, forward, right, up );
@@ -536,9 +535,7 @@ void EV_FireGlock2( event_args_t *args )
 	vec3_t up, right, forward;
 
 	idx = args->entindex;
-	VectorCopy( args->origin, origin );
-	VectorCopy( args->angles, angles );
-	VectorCopy( args->velocity, velocity );
+	EV_GetWeaponEventPose( args, origin, angles, velocity );
 
 	AngleVectors( angles, forward, right, up );
 
@@ -590,9 +587,7 @@ void EV_FireShotGunDouble( event_args_t *args )
 	float flSpread = 0.01;
 
 	idx = args->entindex;
-	VectorCopy( args->origin, origin );
-	VectorCopy( args->angles, angles );
-	VectorCopy( args->velocity, velocity );
+	EV_GetWeaponEventPose( args, origin, angles, velocity );
 
 	AngleVectors( angles, forward, right, up );
 
@@ -644,9 +639,7 @@ void EV_FireShotGunSingle( event_args_t *args )
 	float flSpread = 0.01;
 
 	idx = args->entindex;
-	VectorCopy( args->origin, origin );
-	VectorCopy( args->angles, angles );
-	VectorCopy( args->velocity, velocity );
+	EV_GetWeaponEventPose( args, origin, angles, velocity );
 
 	AngleVectors( angles, forward, right, up );
 
@@ -701,9 +694,7 @@ void EV_FireMP5( event_args_t *args )
 	float flSpread = 0.01;
 
 	idx = args->entindex;
-	VectorCopy( args->origin, origin );
-	VectorCopy( args->angles, angles );
-	VectorCopy( args->velocity, velocity );
+	EV_GetWeaponEventPose( args, origin, angles, velocity );
 
 	AngleVectors( angles, forward, right, up );
 
@@ -756,7 +747,7 @@ void EV_FireMP52( event_args_t *args )
 	vec3_t origin;
 	
 	idx = args->entindex;
-	VectorCopy( args->origin, origin );
+	EV_GetWeaponEventPose( args, origin, NULL, NULL );
 
 	if ( EV_IsLocal( idx ) )
 	{
@@ -795,9 +786,7 @@ void EV_FirePython( event_args_t *args )
 	float flSpread = 0.01;
 
 	idx = args->entindex;
-	VectorCopy( args->origin, origin );
-	VectorCopy( args->angles, angles );
-	VectorCopy( args->velocity, velocity );
+	EV_GetWeaponEventPose( args, origin, angles, velocity );
 
 	AngleVectors( angles, forward, right, up );
 
@@ -850,9 +839,7 @@ void EV_SpinGauss( event_args_t *args )
 	int pitch;
 
 	idx = args->entindex;
-	VectorCopy( args->origin, origin );
-	VectorCopy( args->angles, angles );
-	VectorCopy( args->velocity, velocity );
+	EV_GetWeaponEventPose( args, origin, angles, velocity );
 
 	pitch = args->iparam1;
 
@@ -901,9 +888,7 @@ void EV_FireGauss( event_args_t *args )
 	vec3_t up, right, forward;
 
 	idx = args->entindex;
-	VectorCopy( args->origin, origin );
-	VectorCopy( args->angles, angles );
-	VectorCopy( args->velocity, velocity );
+	EV_GetWeaponEventPose( args, origin, angles, velocity );
 
 	if ( args->bparam2 )
 	{
@@ -1183,7 +1168,7 @@ void EV_Crowbar( event_args_t *args )
 	vec3_t velocity;
 
 	idx = args->entindex;
-	VectorCopy( args->origin, origin );
+	EV_GetWeaponEventPose( args, origin, NULL, NULL );
 	
 	//Play Swing sound
 	gEngfuncs.pEventAPI->EV_PlaySound( idx, origin, CHAN_WEAPON, RemapFile("weapons/cbar_miss1.wav"), 1, ATTN_NORM, 0, PITCH_NORM);
@@ -1248,10 +1233,7 @@ void EV_FireCrossbow2( event_args_t *args )
 	vec3_t velocity;
 
 	idx = args->entindex;
-	VectorCopy( args->origin, origin );
-	VectorCopy( args->angles, angles );
-
-	VectorCopy( args->velocity, velocity );
+	EV_GetWeaponEventPose( args, origin, angles, velocity );
 	
 	AngleVectors( angles, forward, right, up );
 
@@ -1333,7 +1315,7 @@ void EV_FireCrossbow( event_args_t *args )
 	vec3_t origin;
 
 	idx = args->entindex;
-	VectorCopy( args->origin, origin );
+	EV_GetWeaponEventPose( args, origin, NULL, NULL );
 	
 	gEngfuncs.pEventAPI->EV_PlaySound( idx, origin, CHAN_WEAPON, RemapFile("weapons/xbow_fire1.wav"), 1, ATTN_NORM, 0, 93 + gEngfuncs.pfnRandomLong(0,0xF) );
 	gEngfuncs.pEventAPI->EV_PlaySound( idx, origin, CHAN_ITEM, RemapFile("weapons/xbow_reload1.wav"), gEngfuncs.pfnRandomFloat(0.95, 1.0), ATTN_NORM, 0, 93 + gEngfuncs.pfnRandomLong(0,0xF) );
@@ -1376,7 +1358,7 @@ void EV_FireRpg( event_args_t *args )
 	vec3_t origin;
 
 	idx = args->entindex;
-	VectorCopy( args->origin, origin );
+	EV_GetWeaponEventPose( args, origin, NULL, NULL );
 	
 	gEngfuncs.pEventAPI->EV_PlaySound( idx, origin, CHAN_WEAPON, RemapFile("weapons/rocketfire1.wav"), 0.9, ATTN_NORM, 0, PITCH_NORM );
 	gEngfuncs.pEventAPI->EV_PlaySound( idx, origin, CHAN_ITEM, RemapFile("weapons/glauncher.wav"), 0.7, ATTN_NORM, 0, PITCH_NORM );
@@ -1453,7 +1435,7 @@ void EV_EgonFire( event_args_t *args )
 	vec3_t origin;
 
 	idx = args->entindex;
-	VectorCopy( args->origin, origin );
+	EV_GetWeaponEventPose( args, origin, NULL, NULL );
 	iFireState = args->iparam1;
 	iFireMode = args->iparam2;
 	int iStartup = args->bparam1;
@@ -1692,8 +1674,7 @@ void EV_HornetGunFire( event_args_t *args )
 	vec3_t origin, angles, vecSrc, forward, right, up;
 
 	idx = args->entindex;
-	VectorCopy( args->origin, origin );
-	VectorCopy( args->angles, angles );
+	EV_GetWeaponEventPose( args, origin, angles, NULL );
 	iFireMode = args->iparam1;
 
 	//Only play the weapon anims if I shot it.
@@ -1739,8 +1720,7 @@ void EV_TripmineFire( event_args_t *args )
 	pmtrace_t tr;
 
 	idx = args->entindex;
-	VectorCopy( args->origin, vecSrc );
-	VectorCopy( args->angles, angles );
+	EV_GetWeaponEventPose( args, vecSrc, angles, NULL );
 
 	AngleVectors ( angles, forward, NULL, NULL );
 		
@@ -1792,8 +1772,7 @@ void EV_SnarkFire( event_args_t *args )
 	pmtrace_t tr;
 
 	idx = args->entindex;
-	VectorCopy( args->origin, vecSrc );
-	VectorCopy( args->angles, angles );
+	EV_GetWeaponEventPose( args, vecSrc, angles, NULL );
 
 	AngleVectors ( angles, forward, NULL, NULL );
 		
@@ -1836,7 +1815,7 @@ void EV_TrainPitchAdjust( event_args_t *args )
 
 	idx = args->entindex;
 	
-	VectorCopy( args->origin, origin );
+	EV_GetWeaponEventPose( args, origin, NULL, NULL );
 
 	us_params = (unsigned short)args->iparam1;
 	stop	  = args->bparam1;

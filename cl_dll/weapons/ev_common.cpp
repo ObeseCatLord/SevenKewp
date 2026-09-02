@@ -104,6 +104,31 @@ qboolean EV_IsLocal( int idx )
 		return gEngfuncs.pEventAPI->EV_IsLocal( idx - 1 ) ? true : false;
 }
 
+void EV_GetWeaponEventPose( event_args_t *args, float *origin, float *angles, float *velocity )
+{
+	cl_entity_t *viewmodel;
+
+	if ( origin )
+		VectorCopy( args->origin, origin );
+	if ( angles )
+		VectorCopy( args->angles, angles );
+	if ( velocity )
+		VectorCopy( args->velocity, velocity );
+
+	if ( !VR_IsActive() || !EV_IsLocal( args->entindex ) || !( viewmodel = GetViewEntity() ) )
+		return;
+
+	if ( origin )
+		VectorCopy( viewmodel->curstate.origin, origin );
+	if ( angles )
+	{
+		VectorCopy( viewmodel->curstate.angles, angles );
+		angles[0] = -angles[0];
+	}
+	if ( velocity )
+		VectorCopy( viewmodel->curstate.velocity, velocity );
+}
+
 /*
 =================
 EV_GetGunPosition
