@@ -1,32 +1,82 @@
 #pragma once
+
 #include "../../weapon/CBasePlayerWeapon.h"
 
+// SevenKewp reserves different slots than original They Hunger.
 #define TH_WEAPON_CHAINGUN 27
 #define TH_WEAPON_MEDKIT 28
 
-class CWeaponTheyHungerChaingun : public CBasePlayerWeapon {
+class CWeaponTheyHungerChaingun : public CBasePlayerWeapon
+{
 public:
-	void Spawn(); void Precache(); int GetItemInfo(ItemInfo* p); BOOL Deploy();
-	void Holster(int = 0); void PrimaryAttack(); void SecondaryAttack(); void Reload(); void WeaponIdle();
-	BOOL UseDecrement() {
+#if !defined(CLIENT_DLL)
+	int Save(CSave& save);
+	int Restore(CRestore& restore);
+	static TYPEDESCRIPTION m_SaveData[];
+#endif
+	void Spawn();
+	void Precache();
+	void PrecacheEvents();
+	int iItemSlot() { return 4; }
+	int GetItemInfo(ItemInfo* p);
+	BOOL Deploy();
+	void Holster(int skiplocal = 0);
+	void PrimaryAttack();
+	void SecondaryAttack();
+	void Reload();
+	void WeaponIdle();
+	BOOL ShouldWeaponIdle() { return TRUE; }
+	BOOL UseDecrement()
+	{
 #if defined(CLIENT_WEAPONS)
 		return TRUE;
 #else
 		return FALSE;
 #endif
 	}
-private: void Fire(); void SpinDown(); int m_spinning; unsigned short m_spinEvent; unsigned short m_fireEvent;
+
+private:
+	void SpinUp();
+	void SpinDown();
+	void Fire(float spread, float cycleTime);
+
+	int m_spinning;
+	unsigned short m_spinEvent;
+	unsigned short m_fireEvent;
 };
-class CWeaponTheyHungerMedkit : public CBasePlayerWeapon {
+
+class CWeaponTheyHungerMedkit : public CBasePlayerWeapon
+{
 public:
-	void Spawn(); void Precache(); int GetItemInfo(ItemInfo* p); BOOL Deploy();
-	void Holster(int = 0); void PrimaryAttack(); void SecondaryAttack(); void Reload(); void WeaponIdle(); BOOL PlayEmptySound();
-	BOOL UseDecrement() {
+#if !defined(CLIENT_DLL)
+	int Save(CSave& save);
+	int Restore(CRestore& restore);
+	static TYPEDESCRIPTION m_SaveData[];
+#endif
+	void Spawn();
+	void Precache();
+	int iItemSlot() { return 5; }
+	int GetItemInfo(ItemInfo* p);
+	BOOL Deploy();
+	void Holster(int skiplocal = 0);
+	void PrimaryAttack();
+	void SecondaryAttack();
+	void Reload();
+	void WeaponIdle();
+	BOOL ShouldWeaponIdle() { return TRUE; }
+	BOOL PlayEmptySound();
+	BOOL UseDecrement()
+	{
 #if defined(CLIENT_WEAPONS)
 		return TRUE;
 #else
 		return FALSE;
 #endif
 	}
-private: void Heal(); int m_using;
+
+private:
+	void StartUse();
+	void Heal();
+
+	int m_using;
 };
