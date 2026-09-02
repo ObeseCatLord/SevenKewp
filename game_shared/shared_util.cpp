@@ -135,6 +135,55 @@ int sprintf_safe(char* dst, int len_dst, const char* format, ...)
 	return 0;
 }
 
+#ifdef CLIENT_DLL
+static std::string getMd5Hex(const uint8_t* data, int len) {
+	uint8_t digest[16];
+	MD5Context mdc;
+	MD5Init(&mdc);
+	MD5Update(&mdc, data, len);
+	MD5Final(digest, &mdc);
+
+	static const char hex[] = "0123456789abcdef";
+	std::string result;
+	result.reserve(sizeof(digest) * 2);
+	for (int i = 0; i < (int)sizeof(digest); i++) {
+		result += hex[digest[i] >> 4];
+		result += hex[digest[i] & 0x0f];
+	}
+	return result;
+}
+
+// Packaged Lambda1VR data is copied into the game directory, which normally
+// takes precedence over server downloads. Trust it only when a source-controlled
+// manifest confirms the exact contents, so user overrides still block updates.
+static bool isPackagedSevenKewpDataFile(const char* fpath, const std::string& loadedPath,
+	const uint8_t* data, int len) {
+	if (!data || len < 0) {
+		return false;
+	}
+
+	const char* gameDir = gEngfuncs.pfnGetGameDirectory();
+	const std::string packagePath = normalize_path(std::string(gameDir) + "/" + fpath);
+	if (loadedPath != packagePath) {
+		return false;
+	}
+
+	std::ifstream manifest(normalize_path(std::string(gameDir) + "/sevenkewp_data_manifest.txt"));
+	if (!manifest.is_open()) {
+		return false;
+	}
+
+	std::string line;
+	while (std::getline(manifest, line)) {
+		std::vector<std::string> fields = splitString(line, " \t");
+		if (fields.size() == 2 && fields[0] == fpath) {
+			return fields[1] == getMd5Hex(data, len);
+		}
+	}
+	return false;
+}
+#endif
+
 uint8_t* UTIL_AppendFileData(const char* fpath, uint8_t* existingData, int& len, bool& overrideDetected) {
 	int appendLen;
 
@@ -145,7 +194,7 @@ uint8_t* UTIL_AppendFileData(const char* fpath, uint8_t* existingData, int& len,
 	const char* gamedir = gEngfuncs.pfnGetGameDirectory();
 	const char* expectedPath = UTIL_VarArgs("%s_downloads/%s", gamedir, fpath);
 	std::string loadedPath = getGameFilePath(fpath);
-	if (expectedPath != loadedPath) {
+	if (expectedPath != loadedPath && !isPackagedSevenKewpDataFile(fpath, loadedPath, appendData, appendLen)) {
 		overrideDetected = true;
 		PRINTF("WARNING: This file prevents data updates (consider deleting):\n    %s\n", loadedPath.c_str());
 	}
