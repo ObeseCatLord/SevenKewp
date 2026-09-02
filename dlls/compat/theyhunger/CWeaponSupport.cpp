@@ -31,6 +31,7 @@ constexpr int TH_CHAINGUN_MAX_CLIP = 100;
 constexpr int TH_CHAINGUN_DEFAULT_GIVE = 100;
 constexpr int TH_CHAINGUN_WEIGHT = 20;
 constexpr int TH_MEDKIT_DEFAULT_GIVE = 8;
+constexpr int TH_MEDKIT_MAX_CARRY = 12;
 constexpr int TH_MEDKIT_WEIGHT = -1;
 
 Vector ChaingunAimVector(CBasePlayer* player)
@@ -321,6 +322,24 @@ void CWeaponTheyHungerMedkit::Precache()
 	PRECACHE_SOUND("items/9mmclip1.wav");
 	PRECACHE_SOUND("items/medshot4.wav");
 	PRECACHE_SOUND("items/medshotno1.wav");
+}
+
+int CWeaponTheyHungerMedkit::ExtractAmmo(CBasePlayerWeapon* target)
+{
+	CBasePlayer* player = target ? target->GetPlayer() : NULL;
+	if (!player)
+		return 0;
+
+	const int ammoIndex = player->GetAmmoIndex("health");
+	const int room = ammoIndex >= 0 ? TH_MEDKIT_MAX_CARRY - player->m_rgAmmo[ammoIndex] : 0;
+	if (room <= 0)
+	{
+		m_iDefaultAmmo = 0;
+		return 0;
+	}
+	if (m_iDefaultAmmo > room)
+		m_iDefaultAmmo = room;
+	return CBasePlayerWeapon::ExtractAmmo(target);
 }
 
 int CWeaponTheyHungerMedkit::GetItemInfo(ItemInfo* p)

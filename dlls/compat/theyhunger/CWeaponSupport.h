@@ -55,6 +55,7 @@ public:
 #endif
 	void Spawn();
 	void Precache();
+	int ExtractAmmo(CBasePlayerWeapon* target) override;
 	int iItemSlot() { return 5; }
 	int GetItemInfo(ItemInfo* p);
 	BOOL Deploy();
