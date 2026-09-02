@@ -2,6 +2,11 @@
 #include "../../weapon/CBasePlayerWeapon.h"
 class CWeaponTheyHungerSniper : public CBasePlayerWeapon {
 public:
+#if !defined(CLIENT_DLL)
+  int Save(CSave& save);
+  int Restore(CRestore& restore);
+  static TYPEDESCRIPTION m_SaveData[];
+#endif
   void Spawn();
   void Precache();
   void PrecacheEvents();
@@ -30,6 +35,11 @@ private:
 };
 class CWeaponTheyHungerTFCSniper : public CBasePlayerWeapon {
 public:
+#if !defined(CLIENT_DLL)
+  int Save(CSave& save);
+  int Restore(CRestore& restore);
+  static TYPEDESCRIPTION m_SaveData[];
+#endif
   void Spawn();
   void Precache();
   void PrecacheEvents();

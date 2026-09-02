@@ -42,12 +42,14 @@
 #include "../dlls/weapon/CSatchel.h"
 #include "../dlls/weapon/CTripmine.h"
 #include "../dlls/weapon/CSqueak.h"
+#include "../dlls/compat/theyhunger/CWeaponAP9.h"
 #include "../dlls/compat/theyhunger/CWeaponTaurus.h"
 #include "../dlls/compat/theyhunger/CWeaponSniper.h"
 #include "../dlls/compat/theyhunger/CWeaponSupport.h"
 #include "../dlls/compat/theyhunger/CWeaponMelee.h"
 #include "../game_shared/compat/theyhunger/taurus.h"
 #include "../game_shared/compat/theyhunger/sniper.h"
+#include "../game_shared/compat/theyhunger/ap9.h"
 #include "../dlls/weapon/custom/CWeaponCustom.h"
 #include "prediction_files.h"
 #include "weapon_res.h"
@@ -109,6 +111,7 @@ CHandGrenade g_HandGren;
 CSatchel g_Satchel;
 CTripmine g_Tripmine;
 CSqueak g_Snark;
+CWeaponTheyHungerAP9 g_AP9;
 CWeaponTheyHungerTaurus g_Taurus;
 CWeaponTheyHungerSniper g_Sniper;
 CWeaponTheyHungerTFCSniper g_TFCSniper;
@@ -363,9 +366,14 @@ void HUD_InitClientWeapons( void )
 	HUD_PrepEntity( &g_Satchel	, &player );
 	HUD_PrepEntity( &g_Tripmine	, &player );
 	HUD_PrepEntity( &g_Snark	, &player );
+	HUD_PrepEntity( &g_AP9		, &player );
 	HUD_PrepEntity( &g_Taurus	, &player );
 	HUD_PrepEntity( &g_Sniper	, &player );
 	HUD_PrepEntity( &g_TFCSniper	, &player );
+	HUD_PrepEntity( &g_TheyHungerChaingun, &player );
+	HUD_PrepEntity( &g_TheyHungerMedkit, &player );
+	HUD_PrepEntity( &g_TheyHungerShovel, &player );
+	HUD_PrepEntity( &g_TheyHungerSpanner, &player );
 
 	// fill remaining slots with dummy weapons
 	for (int i = 1; i < MAX_WEAPONS; i++) {
@@ -433,6 +441,7 @@ CBasePlayerWeapon* GetPredictedWeapon(int id) {
 	case WEAPON_SATCHEL: return &g_Satchel;
 	case WEAPON_TRIPMINE: return &g_Tripmine;
 	case WEAPON_SNARK: return &g_Snark;
+	case TH_WEAPON_AP9: return &g_AP9;
 	case TH_WEAPON_TAURUS: return &g_Taurus;
 	case TH_WEAPON_SNIPER: return &g_Sniper;
 	case TH_WEAPON_TFC_SNIPER: return &g_TFCSniper;

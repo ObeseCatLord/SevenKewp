@@ -11,6 +11,7 @@
 #include "../../game_shared/compat/theyhunger/ap9.h"
 
 void V_PunchAxis(int axis, float punch);
+void EV_GetWeaponEventPose(event_args_t* args, float* origin, float* angles, float* velocity);
 
 extern "C" void EV_FireAP9(event_args_t* args)
 {
@@ -28,9 +29,7 @@ extern "C" void EV_FireAP9(event_args_t* args)
 	vec3_t up;
 	vec3_t right;
 	vec3_t forward;
-	VectorCopy(args->origin, origin);
-	VectorCopy(args->angles, angles);
-	VectorCopy(args->velocity, velocity);
+	EV_GetWeaponEventPose(args, origin, angles, velocity);
 	AngleVectors(angles, forward, right, up);
 
 	if (EV_IsLocal(index))

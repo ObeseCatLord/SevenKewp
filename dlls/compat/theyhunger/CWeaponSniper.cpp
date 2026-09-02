@@ -3,6 +3,18 @@
 #include "../../../engine/shake.h"
 #include "../../../game_shared/compat/theyhunger/sniper.h"
 #include "CWeaponSniper.h"
+
+#if !defined(CLIENT_DLL)
+TYPEDESCRIPTION CWeaponTheyHungerSniper::m_SaveData[] = {
+    DEFINE_FIELD(CWeaponTheyHungerSniper, m_inZoom, FIELD_INTEGER),
+};
+IMPLEMENT_SAVERESTORE(CWeaponTheyHungerSniper, CBasePlayerWeapon)
+
+TYPEDESCRIPTION CWeaponTheyHungerTFCSniper::m_SaveData[] = {
+    DEFINE_FIELD(CWeaponTheyHungerTFCSniper, m_inZoom, FIELD_INTEGER),
+};
+IMPLEMENT_SAVERESTORE(CWeaponTheyHungerTFCSniper, CBasePlayerWeapon)
+#endif
 #include "../../player/CBasePlayer.h"
 #include "../../weapon/CBasePlayerAmmo.h"
 LINK_ENTITY_TO_CLASS(weapon_th_sniper, CWeaponTheyHungerSniper)

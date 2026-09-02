@@ -77,7 +77,7 @@ BOOL CEinarBoss::FireGun() {
 	GetAttachment(0, posBarrel, angBarrel);
 	Vector gun = (posBarrel - posGun).Normalize();
 
-	if (DotProduct(gun, target) > 0.98f && !(m_shots++ % 3)) {
+	if (DotProduct(gun, target) > 0.98f && !(++m_shots % 3)) {
 		FireBullets(1, posGun, gun, VECTOR_CONE_4DEGREES, 8192, BULLET_MONSTER_9MM, 1);
 		EMIT_SOUND(edict(), CHAN_WEAPON, "turret/tu_fire1.wav", 1, 0.3f);
 		return TRUE;
