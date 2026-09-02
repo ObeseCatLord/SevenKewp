@@ -5,6 +5,8 @@ set(WEAPON_HDR
 )
 set(SHARED_WEAPON_SRC
 	../dlls/compat/theyhunger/CWeaponAP9.cpp
+	../dlls/compat/theyhunger/CWeaponTaurus.cpp
+	../dlls/compat/theyhunger/CWeaponSniper.cpp
 	../dlls/weapon/CGlock.cpp
 	../dlls/weapon/CCrossbow.cpp
 	../dlls/weapon/CCrowbar.cpp
@@ -37,6 +39,7 @@ set(WEAPON_EVENTS_HDR
 )
 set(WEAPON_EVENTS_SRC
 	compat/theyhunger/ap9_event.cpp
+	compat/theyhunger/taurus_sniper_events.cpp
 	weapons/ev_hldm.cpp
 	weapons/ev_custom.cpp
 	weapons/ev_common.cpp
