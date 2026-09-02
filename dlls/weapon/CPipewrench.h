@@ -52,6 +52,7 @@ public:
 
 	void PrimaryAttack() override;
 	void SecondaryAttack() override;
+	void ItemPostFrame();
 	bool Swing(const bool bFirst);
 	void BigSwing();
 	BOOL Deploy() override;
@@ -83,4 +84,14 @@ public:
 
 private:
 	unsigned short m_usPipewrench;
+#ifndef CLIENT_DLL
+	void CheckPhysicalSwing( float speed );
+	bool HasHitEntityThisSwing( CBaseEntity* entity );
+	void RememberHitEntityThisSwing( CBaseEntity* entity );
+	void ClearPhysicalSwingState();
+	bool m_physicalSwinging;
+	float m_physicalHitCount;
+	float m_physicalLastWoosh;
+	EHANDLE m_physicalHitEntities[32];
+#endif
 };

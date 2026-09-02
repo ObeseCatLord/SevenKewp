@@ -12,6 +12,7 @@ public:
 	int GetItemInfo(ItemInfo *p);
 
 	void PrimaryAttack( void );
+	void ItemPostFrame( void );
 	int Swing( int fFirst );
 	BOOL Deploy( void );
 	void Holster( int skiplocal = 0 );
@@ -31,4 +32,15 @@ public:
 		return FALSE;
 #endif
 	}
+
+#ifndef CLIENT_DLL
+private:
+	void CheckPhysicalSwing( float speed );
+	bool HasHitEntityThisSwing( CBaseEntity* entity );
+	void RememberHitEntityThisSwing( CBaseEntity* entity );
+	void ClearPhysicalSwingState();
+	bool m_physicalSwinging;
+	float m_physicalHitCount;
+	EHANDLE m_physicalHitEntities[32];
+#endif
 };

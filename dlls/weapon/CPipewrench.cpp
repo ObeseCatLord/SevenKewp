@@ -17,6 +17,8 @@
 
 #define PIPEWRENCH_BODYHIT_VOLUME 128
 #define PIPEWRENCH_WALLHIT_VOLUME 512
+#define PIPEWRENCH_MIN_PHYSICAL_SWING_SPEED 70.0f
+#define PIPEWRENCH_PHYSICAL_LENGTH 24.0f
 
 enum PipewrenchAnim
 {
@@ -59,6 +61,11 @@ void CPipewrench::Spawn()
 	m_iDefaultAmmo = DISPLACER_DEFAULT_GIVE;
 
 	FallInit();// get ready to fall down.
+
+#ifndef CLIENT_DLL
+	m_physicalLastWoosh = 0.0f;
+	ClearPhysicalSwingState();
+#endif
 }
 
 void CPipewrench::Precache()
@@ -107,8 +114,45 @@ void CPipewrench::Holster(int skiplocal)
 	m_iSwingMode = SWING_NONE;
 	SetThink(nullptr);
 
+#ifndef CLIENT_DLL
+	ClearPhysicalSwingState();
+#endif
 	m_pPlayer->m_flNextAttack = UTIL_WeaponTimeBase() + 0.5;
 	SendWeaponAnim(PIPEWRENCH_HOLSTER);
+}
+
+void CPipewrench::ItemPostFrame()
+{
+	CBasePlayerWeapon::ItemPostFrame();
+
+#ifndef CLIENT_DLL
+	CBasePlayer* player = GetPlayer();
+	if (!player || !player->HasFreshVRPose()) {
+		ClearPhysicalSwingState();
+		return;
+	}
+
+	const float speed = player->GetWeaponVelocity().Length();
+	if (speed >= PIPEWRENCH_MIN_PHYSICAL_SWING_SPEED) {
+		if (!m_physicalSwinging) {
+			if (gpGlobals->time > m_physicalLastWoosh + 0.5f) {
+				const char* sounds[] = {
+					"weapons/pwrench_miss1.wav",
+					"weapons/pwrench_miss2.wav",
+					"weapons/pwrench_big_miss.wav"
+				};
+				EMIT_SOUND_DYN(ENT(pev), CHAN_ITEM, sounds[RANDOM_LONG(0, 2)],
+					1.0f, ATTN_NORM, 0, 98 + RANDOM_LONG(0, 3));
+				m_physicalLastWoosh = gpGlobals->time;
+			}
+			m_physicalSwinging = true;
+		}
+		CheckPhysicalSwing(speed);
+	}
+	else if (m_physicalSwinging) {
+		ClearPhysicalSwingState();
+	}
+#endif
 }
 
 void CPipewrench::PrimaryAttack()
@@ -672,3 +716,89 @@ int CPipewrench::GetItemInfo(ItemInfo* p)
 	p->iWeight = PIPEWRENCH_WEIGHT;
 	return 1;
 }
+
+#ifndef CLIENT_DLL
+void CPipewrench::CheckPhysicalSwing(float speed)
+{
+	CBasePlayer* player = GetPlayer();
+	if (!player)
+		return;
+
+	TraceResult tr;
+	UTIL_MakeVectors(player->GetWeaponViewAngles());
+	const Vector src = player->GetWeaponPosition();
+	const Vector end = src + gpGlobals->v_up * PIPEWRENCH_PHYSICAL_LENGTH;
+	UTIL_TraceLine(src, end, dont_ignore_monsters, ENT(player->pev), &tr);
+	if (tr.fStartSolid || tr.fAllSolid || tr.flFraction >= 1.0f)
+		return;
+
+	CBaseEntity* entity = CBaseEntity::Instance(tr.pHit);
+	if (!entity || HasHitEntityThisSwing(entity))
+		return;
+
+	RememberHitEntityThisSwing(entity);
+	m_physicalHitCount += 1.0f;
+
+	ClearMultiDamage();
+	entity->TraceAttack(player->pev,
+		GetDamage(gSkillData.sk_plr_pipewrench) *
+			(speed / PIPEWRENCH_MIN_PHYSICAL_SWING_SPEED) / m_physicalHitCount,
+		gpGlobals->v_up, &tr, DMG_CLUB);
+	ApplyMultiDamage(player->pev, player->pev);
+
+	float volume = 1.0f;
+	const bool bodyHit = (entity->Classify() != CLASS_NONE || entity->IsPlayerCorpse()) &&
+		!entity->IsMachine() && !entity->IsBSPModel();
+	if (bodyHit) {
+		const char* sounds[] = {
+			"weapons/pwrench_hitbod1.wav",
+			"weapons/pwrench_hitbod2.wav",
+			"weapons/pwrench_hitbod3.wav"
+		};
+		EMIT_SOUND(ENT(player->pev), CHAN_ITEM, sounds[RANDOM_LONG(0, 2)], 1.0f, ATTN_NORM);
+		player->m_iWeaponVolume = PIPEWRENCH_BODYHIT_VOLUME;
+		if (entity->IsAlive())
+			volume = 0.25f;
+	}
+	else {
+		float textureVolume = TEXTURETYPE_PlaySound(&tr, src, src + (end - src) * 2.0f,
+			BULLET_PLAYER_CROWBAR);
+		if (g_pGameRules->IsMultiplayer())
+			textureVolume = 1.0f;
+		EMIT_SOUND_DYN(ENT(player->pev), CHAN_ITEM, RANDOM_LONG(0, 1) ?
+			"weapons/pwrench_hit1.wav" : "weapons/pwrench_hit2.wav",
+			textureVolume, ATTN_NORM, 0, 98 + RANDOM_LONG(0, 3));
+	}
+
+	player->m_iWeaponVolume = (int)(volume * PIPEWRENCH_WALLHIT_VOLUME);
+	DecalGunshot(&tr, BULLET_PLAYER_CROWBAR);
+	CLIENT_COMMAND(player->edict(), "vr_haptic 90 -1 1\\n");
+}
+
+bool CPipewrench::HasHitEntityThisSwing(CBaseEntity* entity)
+{
+	for (size_t i = 0; i < ARRAYSIZE(m_physicalHitEntities); ++i) {
+		if ((CBaseEntity*)m_physicalHitEntities[i] == entity)
+			return true;
+	}
+	return false;
+}
+
+void CPipewrench::RememberHitEntityThisSwing(CBaseEntity* entity)
+{
+	for (size_t i = 0; i < ARRAYSIZE(m_physicalHitEntities); ++i) {
+		if (!m_physicalHitEntities[i]) {
+			m_physicalHitEntities[i] = entity;
+			return;
+		}
+	}
+}
+
+void CPipewrench::ClearPhysicalSwingState()
+{
+	m_physicalSwinging = false;
+	m_physicalHitCount = 0.0f;
+	for (size_t i = 0; i < ARRAYSIZE(m_physicalHitEntities); ++i)
+		m_physicalHitEntities[i] = NULL;
+}
+#endif

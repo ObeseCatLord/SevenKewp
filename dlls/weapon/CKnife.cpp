@@ -24,6 +24,9 @@
 #include "gamerules.h"
 #include "weapon/CCrowbar.h"
 
+#define KNIFE_MIN_PHYSICAL_SWING_SPEED 30.0f
+#define KNIFE_PHYSICAL_LENGTH 12.0f
+
 LINK_ENTITY_TO_CLASS(weapon_knife, CKnife)
 
 enum knife_e {
@@ -53,6 +56,10 @@ void CKnife::Spawn()
 	m_iClip = -1;
 
 	FallInit();// get ready to fall down.
+
+#ifndef CLIENT_DLL
+	ClearPhysicalSwingState();
+#endif
 }
 
 
@@ -102,8 +109,33 @@ void CKnife::Holster(int skiplocal /* = 0 */)
 	if (!m_pPlayer)
 		return;
 
+#ifndef CLIENT_DLL
+	ClearPhysicalSwingState();
+#endif
 	m_pPlayer->m_flNextAttack = UTIL_WeaponTimeBase() + 0.5;
 	SendWeaponAnim(KNIFE_HOLSTER);
+}
+
+void CKnife::ItemPostFrame()
+{
+	CBasePlayerWeapon::ItemPostFrame();
+
+#ifndef CLIENT_DLL
+	CBasePlayer* player = GetPlayer();
+	if (!player || !player->HasFreshVRPose()) {
+		ClearPhysicalSwingState();
+		return;
+	}
+
+	const float speed = player->GetWeaponVelocity().Length();
+	if (speed >= KNIFE_MIN_PHYSICAL_SWING_SPEED) {
+		m_physicalSwinging = true;
+		CheckPhysicalSwing(speed);
+	}
+	else if (m_physicalSwinging) {
+		ClearPhysicalSwingState();
+	}
+#endif
 }
 
 void CKnife::PrimaryAttack()
@@ -308,3 +340,85 @@ int CKnife::Swing(int fFirst)
 	}
 	return fDidHit;
 }
+
+#ifndef CLIENT_DLL
+void CKnife::CheckPhysicalSwing(float speed)
+{
+	CBasePlayer* player = GetPlayer();
+	if (!player)
+		return;
+
+	TraceResult tr;
+	UTIL_MakeVectors(player->GetWeaponViewAngles());
+	const Vector src = player->GetWeaponPosition();
+	const Vector end = src + gpGlobals->v_up * KNIFE_PHYSICAL_LENGTH;
+	UTIL_TraceLine(src, end, dont_ignore_monsters, ENT(player->pev), &tr);
+	if (tr.fStartSolid || tr.fAllSolid || tr.flFraction >= 1.0f)
+		return;
+
+	CBaseEntity* entity = CBaseEntity::Instance(tr.pHit);
+	if (!entity || HasHitEntityThisSwing(entity))
+		return;
+
+	RememberHitEntityThisSwing(entity);
+	m_physicalHitCount += 1.0f;
+
+	ClearMultiDamage();
+	// Lambda1VR keeps knife physical damage at full strength after the velocity gate.
+	entity->TraceAttack(player->pev,
+		GetDamage(gSkillData.sk_plr_crowbar) / m_physicalHitCount,
+		gpGlobals->v_up, &tr, DMG_CLUB);
+	ApplyMultiDamage(player->pev, player->pev);
+
+	float volume = 1.0f;
+	const bool bodyHit = (entity->Classify() != CLASS_NONE || entity->IsPlayerCorpse()) &&
+		!entity->IsMachine() && !entity->IsBSPModel();
+	if (bodyHit) {
+		EMIT_SOUND(ENT(player->pev), CHAN_ITEM, RANDOM_LONG(0, 1) ?
+			"weapons/knife_hit_flesh1.wav" : "weapons/knife_hit_flesh2.wav", 1.0f, ATTN_NORM);
+		player->m_iWeaponVolume = CROWBAR_BODYHIT_VOLUME;
+		if (entity->IsAlive())
+			volume = 0.25f;
+	}
+	else {
+		float textureVolume = TEXTURETYPE_PlaySound(&tr, src, src + (end - src) * 2.0f,
+			BULLET_PLAYER_CROWBAR);
+		if (g_pGameRules->IsMultiplayer())
+			textureVolume = 1.0f;
+		EMIT_SOUND_DYN(ENT(player->pev), CHAN_ITEM, RANDOM_LONG(0, 1) ?
+			"weapons/knife_hit_wall1.wav" : "weapons/knife_hit_wall2.wav",
+			textureVolume, ATTN_NORM, 0, 98 + RANDOM_LONG(0, 3));
+	}
+
+	player->m_iWeaponVolume = (int)(volume * CROWBAR_WALLHIT_VOLUME);
+	DecalGunshot(&tr, BULLET_PLAYER_CROWBAR);
+	CLIENT_COMMAND(player->edict(), "vr_haptic 90 -1 1\\n");
+}
+
+bool CKnife::HasHitEntityThisSwing(CBaseEntity* entity)
+{
+	for (size_t i = 0; i < ARRAYSIZE(m_physicalHitEntities); ++i) {
+		if ((CBaseEntity*)m_physicalHitEntities[i] == entity)
+			return true;
+	}
+	return false;
+}
+
+void CKnife::RememberHitEntityThisSwing(CBaseEntity* entity)
+{
+	for (size_t i = 0; i < ARRAYSIZE(m_physicalHitEntities); ++i) {
+		if (!m_physicalHitEntities[i]) {
+			m_physicalHitEntities[i] = entity;
+			return;
+		}
+	}
+}
+
+void CKnife::ClearPhysicalSwingState()
+{
+	m_physicalSwinging = false;
+	m_physicalHitCount = 0.0f;
+	for (size_t i = 0; i < ARRAYSIZE(m_physicalHitEntities); ++i)
+		m_physicalHitEntities[i] = NULL;
+}
+#endif
