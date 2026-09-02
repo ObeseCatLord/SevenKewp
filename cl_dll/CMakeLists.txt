@@ -7,6 +7,7 @@ set(SHARED_WEAPON_SRC
 	../dlls/compat/theyhunger/CWeaponAP9.cpp
 	../dlls/compat/theyhunger/CWeaponTaurus.cpp
 	../dlls/compat/theyhunger/CWeaponSniper.cpp
+	../dlls/compat/theyhunger/CWeaponSupport.cpp
 	../dlls/weapon/CGlock.cpp
 	../dlls/weapon/CCrossbow.cpp
 	../dlls/weapon/CCrowbar.cpp
