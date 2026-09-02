@@ -24,6 +24,7 @@
 
 #include "hud.h"
 #include "cl_util.h"
+#include "../../vr_client.h"
 #include "parsemsg.h"
 #include <string.h>
 
@@ -138,6 +139,23 @@ int CHudHealth:: MsgFunc_Damage(const char *pszName,  int iSize, void *pbuf )
 	// Actually took damage?
 	if ( damageTaken > 0 || armor > 0 )
 		CalcDamageDirection(vecFrom);
+
+	if (damageTaken > 0)
+	{
+		float time = damageTaken * 8.0f;
+
+		if (time > 500.0f)
+			time = 500.0f;
+
+		const float both = sqrtf(m_fAttackFront * m_fAttackFront + m_fAttackRear * m_fAttackRear);
+		const float left = sqrtf(both * both + m_fAttackLeft * m_fAttackLeft);
+		const float right = sqrtf(both * both + m_fAttackRight * m_fAttackRight);
+
+		if (left > 0.0f)
+			VR_Haptic(time, VR_CLIENT_HAND_LEFT, left);
+		if (right > 0.0f)
+			VR_Haptic(time, VR_CLIENT_HAND_RIGHT, right);
+	}
 
 	return 1;
 }

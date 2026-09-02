@@ -2399,6 +2399,7 @@ void CBasePlayer::PlayerUseTracked(const Vector& handOrigin, const Vector& handA
 	}
 
 	const int hand = offhand ? 1 : 0;
+	const int hapticHand = offhand ? -2 : -1;
 	m_hVRUsableEntity[hand] = NULL;
 	m_bVRUsingEntity[hand] = FALSE;
 	if (pClosest && pClosest->pev->movetype != MOVETYPE_PUSHSTEP &&
@@ -2407,21 +2408,31 @@ void CBasePlayer::PlayerUseTracked(const Vector& handOrigin, const Vector& handA
 
 	if (pClosest) {
 		const int caps = pClosest->ObjectCaps();
+		BOOL usingObject = FALSE;
+		const BOOL itemUsedHaptic = useActive &&
+			(caps & (FCAP_IMPULSE_USE | FCAP_ONOFF_USE));
 		if (usePressed) {
 			EMIT_SOUND(ENT(pev), CHAN_ITEM, "common/wpn_select.wav", 0.4, ATTN_NORM);
-			CLIENT_COMMAND(edict(), "vr_haptic 120 %d 0.8\n", offhand ? -2 : -1);
 		}
 		if ((useActive && (caps & FCAP_CONTINUOUS_USE)) ||
 			(usePressed && (caps & (FCAP_IMPULSE_USE | FCAP_ONOFF_USE)))) {
 			if (caps & FCAP_CONTINUOUS_USE) {
 				m_afPhysicsFlags |= PFLAG_USING;
 				m_bVRUsingEntity[hand] = TRUE;
+				usingObject = TRUE;
+				CLIENT_COMMAND(edict(), "vr_haptic 10 %d %f\n", hapticHand,
+					sin(gpGlobals->time * 12.0f) * 0.6f);
 			}
+			else
+				CLIENT_COMMAND(edict(), "vr_haptic 250 %d 1\n", hapticHand);
 			FireTarget(pClosest, this, this, (caps & FCAP_CONTINUOUS_USE) ? USE_SET : USE_TOGGLE,
 				(caps & FCAP_CONTINUOUS_USE) ? 1 : 0);
 		}
 		else if (useReleased && (caps & FCAP_ONOFF_USE))
 			FireTarget(pClosest, this, this, USE_SET, 0);
+
+		if (m_hVRUsableEntity[hand].GetEntity() == pClosest && !usingObject && !itemUsedHaptic)
+			CLIENT_COMMAND(edict(), "vr_haptic 10 %d 0.1\n", hapticHand);
 	}
 	else if (usePressed)
 		EMIT_SOUND(ENT(pev), CHAN_ITEM, "common/wpn_denyselect.wav", 0.8, ATTN_NORM);

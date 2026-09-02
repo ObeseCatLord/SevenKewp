@@ -128,6 +128,7 @@ void CHandGrenade::PrimaryAttack()
 
 		SendWeaponAnim( HANDGRENADE_PINPULL );
 		m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + 0.5;
+		CLIENT_COMMAND(m_pPlayer->edict(), "vr_haptic 80 -1 0.4\n");
 
 		if (m_pPlayer->m_playerModelAnimSet == PMODEL_ANIMS_HALF_LIFE) {
 			strcpy_safe(m_pPlayer->m_szAnimExtention, "grenade", 32); // doesn't exist, just used to trigger different chargup behavior
@@ -273,6 +274,5 @@ void CHandGrenade::WeaponIdle( void )
 		SendWeaponAnim( iAnim );
 	}
 }
-
 
 

@@ -226,7 +226,8 @@ static void VR_ServerHapticCommand()
 	if( handValue != (float)hand || hand < -2 || hand >= VR_CLIENT_MAX_HANDS ) return;
 	if( hand == -1 ) hand = VR_GetDominantHand();
 	else if( hand == -2 ) hand = VR_GetDominantHand() == VR_CLIENT_HAND_LEFT ? VR_CLIENT_HAND_RIGHT : VR_CLIENT_HAND_LEFT;
-	VR_Haptic( VR_Clamp( duration, 0.0f, 2000.0f ), (unsigned int)hand, VR_Clamp( amplitude, 0.0f, 1.0f ) );
+	VR_Haptic( duration == -1.0f ? -1.0f : VR_Clamp( duration, 0.0f, 2000.0f ),
+		(unsigned int)hand, VR_Clamp( amplitude, 0.0f, 1.0f ) );
 }
 
 void VR_Init()
