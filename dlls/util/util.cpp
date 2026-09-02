@@ -2653,8 +2653,9 @@ void InitEdictRelocations() {
 void PrintEntindexStats(bool showCounts) {
 	int totalFreeLowPrio = 0;
 	int totalFreeNormalPrio = 0;
-	int lowPrioMin = sv_max_client_edicts ? sv_max_client_edicts->value : MAX_LEGACY_CLIENT_ENTS;
 	int reservedSlots = gpGlobals->maxClients + 1;
+	int lowPrioMin = sv_max_client_edicts ? sv_max_client_edicts->value : MAX_LEGACY_CLIENT_ENTS;
+	lowPrioMin = clamp(lowPrioMin, reservedSlots, gpGlobals->maxEntities);
 
 	edict_t* edicts = ENT(0);
 	for (int i = reservedSlots; i < lowPrioMin; i++) {
