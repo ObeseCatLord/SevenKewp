@@ -41,6 +41,7 @@ set(WEAPON_EVENTS_HDR
 )
 set(WEAPON_EVENTS_SRC
 	compat/theyhunger/ap9_event.cpp
+	compat/theyhunger/chaingun_events.cpp
 	compat/theyhunger/taurus_sniper_events.cpp
 	weapons/ev_hldm.cpp
 	weapons/ev_custom.cpp

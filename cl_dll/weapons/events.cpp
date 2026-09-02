@@ -31,6 +31,8 @@ extern "C"
 	void EV_TripmineFire(struct event_args_s* args);
 	void EV_SnarkFire(struct event_args_s* args);
 	void EV_FireAP9(struct event_args_s* args);
+	void EV_FireChaingun1(struct event_args_s* args);
+	void EV_FireChaingun2(struct event_args_s* args);
 	void EV_FireTaurus(struct event_args_s* args);
 	void EV_FireSniper(struct event_args_s* args);
 	void EV_FireSniper2(struct event_args_s* args);
@@ -73,6 +75,8 @@ void EV_HookEvents( void )
 	gEngfuncs.pfnHookEvent("events/tripfire.sc", EV_TripmineFire);
 	gEngfuncs.pfnHookEvent("events/snarkfire.sc", EV_SnarkFire);
 	gEngfuncs.pfnHookEvent("events/ap9.sc", EV_FireAP9);
+	gEngfuncs.pfnHookEvent("events/chaingun1.sc", EV_FireChaingun1);
+	gEngfuncs.pfnHookEvent("events/chaingun2.sc", EV_FireChaingun2);
 	gEngfuncs.pfnHookEvent("events/taurus.sc", EV_FireTaurus);
 	gEngfuncs.pfnHookEvent("events/sniper.sc", EV_FireSniper);
 	gEngfuncs.pfnHookEvent("events/sniper2.sc", EV_FireSniper2);
