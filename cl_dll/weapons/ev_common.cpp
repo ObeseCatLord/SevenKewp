@@ -112,6 +112,16 @@ Figure out the height of the gun
 */
 void EV_GetGunPosition( int idx, bool ducking, float *pos, float *origin )
 {
+	if ( EV_IsLocal( idx ) )
+	{
+		cl_entity_t *viewmodel = GetViewEntity();
+		if ( viewmodel )
+		{
+			VectorCopy( viewmodel->curstate.origin, pos );
+			return;
+		}
+	}
+
 	vec3_t view_ofs;
 
 	VectorClear( view_ofs );
@@ -188,6 +198,19 @@ void EV_GetDefaultShellInfo( event_args_t *args, float *origin, float *velocity,
 
 	fR = gEngfuncs.pfnRandomFloat( 50, 70 );
 	fU = gEngfuncs.pfnRandomFloat( 100, 150 );
+	if ( EV_IsLocal( idx ) )
+	{
+		cl_entity_t *viewmodel = GetViewEntity();
+		if ( viewmodel )
+		{
+			for ( i = 0; i < 3; i++ )
+			{
+				ShellVelocity[i] = viewmodel->curstate.velocity[i] + right[i] * fR + up[i] * fU + forward[i] * 25;
+				ShellOrigin[i] = viewmodel->curstate.origin[i] + up[i] * upScale + forward[i] * forwardScale + right[i] * rightScale;
+			}
+			return;
+		}
+	}
 
 	for ( i = 0; i < 3; i++ )
 	{
