@@ -1,5 +1,7 @@
 #include "vr_client.h"
 
+#include "../public/vr_usercmd_sidecar.h"
+
 #include "hud.h"
 #include "cl_util.h"
 #include "ref_params.h"
@@ -46,6 +48,21 @@ static BEAM *g_vrLaserBeam;
 static TEMPENTITY *g_vrLaserDot;
 static float g_vrLaserExpiry;
 
+typedef struct vr_weapon_pose_s
+{
+	Vector weaponOffset;
+	Vector weaponAngles;
+	Vector weaponVelocity;
+	Vector supportOffset;
+	Vector supportAngles;
+	int stabilised;
+} vr_weapon_pose_t;
+
+static vr_weapon_pose_t g_vrCachedWeaponPose;
+static uint64_t g_vrCachedPoseFrameId;
+static float g_vrCachedPoseYaw;
+static int g_vrCachedWeaponPoseValid;
+
 void VectorAngles( const float *forward, float *angles );
 
 static float VR_Clamp( float value, float minimum, float maximum )
@@ -86,6 +103,7 @@ static void VR_ClearFrame()
 	g_vrNextPoseSendTime = 0.0f;
 	g_vrScopeEngaged = 0;
 	g_vrScopeAnglesValid = 0;
+	g_vrCachedWeaponPoseValid = 0;
 	CVAR_SET_FLOAT( "vr_weapon_stabilised", 0.0f );
 	CVAR_SET_FLOAT( "vr_scope_engaged", 0.0f );
 	VR_KillLaser();
@@ -99,6 +117,7 @@ static void VR_CLIENT_CALL VR_ClientFrame( const vr_client_frame_t *frame )
 		return;
 	}
 	memcpy( &g_vrFrame, frame, sizeof( g_vrFrame ) );
+	g_vrCachedWeaponPoseValid = 0;
 }
 
 static void VR_CLIENT_CALL VR_ClientShutdown()
@@ -243,14 +262,14 @@ void VR_Haptic( float durationMilliseconds, unsigned int hand, float amplitude )
 		g_vrEngineAPI.Haptic( hand, durationMilliseconds / 1000.0f, 0.0f, amplitude );
 }
 
-static void VR_UpdateScope( ref_params_s *params, const Vector &weaponOffset, int stabilised )
+static void VR_UpdateScope( float bodyYaw, const Vector &weaponOffset, int stabilised )
 {
 	Vector headOffset, unusedAngles;
-	if( !params || g_vrCurrentWeapon != WEAPON_CROSSBOW )
+	if( g_vrCurrentWeapon != WEAPON_CROSSBOW )
 	{
 		VR_ReleaseScopeButton(); g_vrScopeEngaged = 0; g_vrScopeAnglesValid = 0; CVAR_SET_FLOAT( "vr_scope_engaged", 0.0f ); return;
 	}
-	if( g_vrFrame.flags & VR_CLIENT_FRAME_HEAD_VALID ) VR_TransformPose( g_vrFrame.head, params->cl_viewangles[YAW], headOffset, unusedAngles );
+	if( g_vrFrame.flags & VR_CLIENT_FRAME_HEAD_VALID ) VR_TransformPose( g_vrFrame.head, bodyYaw, headOffset, unusedAngles );
 	else headOffset = Vector( 0.0f, 0.0f, 0.0f );
 	const float scale = g_vrFrame.world_scale > 0.0f ? g_vrFrame.world_scale : 40.0f;
 	const int requested = stabilised && ( weaponOffset - headOffset ).Length() < scale * 0.28f;
@@ -259,6 +278,51 @@ static void VR_UpdateScope( ref_params_s *params, const Vector &weaponOffset, in
 	g_vrScopeEngaged = gHUD.m_iFOV > 0 && gHUD.m_iFOV < (int)CVAR_GET_FLOAT( "default_fov" );
 	if( !g_vrScopeEngaged ) g_vrScopeAnglesValid = 0;
 	CVAR_SET_FLOAT( "vr_scope_engaged", g_vrScopeEngaged ? 1.0f : 0.0f );
+}
+
+static int VR_ResolveWeaponPose( float bodyYaw, float frametime, vr_weapon_pose_t *pose )
+{
+	const int dominant = VR_GetDominantHand();
+	const int offhand = dominant == VR_CLIENT_HAND_LEFT ? VR_CLIENT_HAND_RIGHT : VR_CLIENT_HAND_LEFT;
+	const vr_client_hand_t *weapon = &g_vrFrame.hands[dominant];
+	const vr_client_hand_t *support = &g_vrFrame.hands[offhand];
+	const float scale = g_vrFrame.world_scale > 0.0f ? g_vrFrame.world_scale : 40.0f;
+
+	if( !pose || !VR_IsActive() || !( weapon->flags & VR_CLIENT_HAND_AIM_VALID ) )
+	{
+		CVAR_SET_FLOAT( "vr_weapon_stabilised", 0.0f );
+		VR_ReleaseScopeButton(); g_vrScopeEngaged = 0; g_vrScopeAnglesValid = 0; CVAR_SET_FLOAT( "vr_scope_engaged", 0.0f );
+		return 0;
+	}
+	VR_TransformPose( weapon->aim, bodyYaw, pose->weaponOffset, pose->weaponAngles );
+	pose->supportOffset = pose->weaponOffset; pose->supportAngles = pose->weaponAngles;
+	if( support->flags & VR_CLIENT_HAND_AIM_VALID ) VR_TransformPose( support->aim, bodyYaw, pose->supportOffset, pose->supportAngles );
+	const float separation = ( pose->supportOffset - pose->weaponOffset ).Length();
+	pose->stabilised = ( support->flags & VR_CLIENT_HAND_AIM_VALID ) && support->squeeze >= 0.7f && separation > scale * 0.15f && separation < scale * 0.50f;
+	CVAR_SET_FLOAT( "vr_weapon_stabilised", pose->stabilised ? 1.0f : 0.0f );
+	if( pose->stabilised ) VectorAngles( pose->supportOffset - pose->weaponOffset, pose->weaponAngles );
+	if( g_vrCurrentWeapon == WEAPON_CROWBAR ) pose->weaponAngles[PITCH] += CVAR_GET_FLOAT( "vr_crowbar_pitchadjust" );
+	else if( !VR_IsThrowable( g_vrCurrentWeapon ) ) pose->weaponAngles[PITCH] += CVAR_GET_FLOAT( "vr_weapon_pitchadjust" );
+	VR_UpdateScope( bodyYaw, pose->weaponOffset, pose->stabilised );
+	if( g_vrScopeEngaged && CVAR_GET_FLOAT( "vr_scope_stabilise" ) != 0.0f )
+	{
+		if( g_vrScopeAnglesValid ) pose->weaponAngles = VR_LerpAngles( g_vrScopeAngles, pose->weaponAngles, VR_Clamp( frametime * 8.0f, 0.0f, 1.0f ) );
+		g_vrScopeAngles = pose->weaponAngles; g_vrScopeAnglesValid = 1;
+	}
+	pose->weaponVelocity = VR_RotateYaw( weapon->linear_velocity, bodyYaw );
+	return VR_IsFiniteVector( pose->weaponOffset ) && VR_IsFiniteVector( pose->weaponAngles ) && VR_IsFiniteVector( pose->weaponVelocity ) && VR_IsFiniteVector( pose->supportOffset ) && VR_IsFiniteVector( pose->supportAngles );
+}
+
+static int VR_GetWeaponPose( float bodyYaw, float frametime, vr_weapon_pose_t *pose )
+{
+	if( g_vrCachedWeaponPoseValid && g_vrCachedPoseFrameId == g_vrFrame.frame_id && g_vrCachedPoseYaw == bodyYaw )
+	{
+		*pose = g_vrCachedWeaponPose;
+		return 1;
+	}
+	if( !VR_ResolveWeaponPose( bodyYaw, frametime, pose ) ) return 0;
+	g_vrCachedWeaponPose = *pose; g_vrCachedPoseFrameId = g_vrFrame.frame_id; g_vrCachedPoseYaw = bodyYaw; g_vrCachedWeaponPoseValid = 1;
+	return 1;
 }
 
 static void VR_AddPresentationModel( cl_entity_t *entity, struct model_s *model, int modelIndex,
@@ -319,35 +383,51 @@ void VR_UpdateViewmodel( ref_params_s *params )
 	if( !params || !VR_IsActive() ) { VR_ReleaseScopeButton(); CVAR_SET_FLOAT( "vr_scope_engaged", 0.0f ); VR_KillLaser(); return; }
 	cl_entity_t *viewmodel = gEngfuncs.GetViewModel();
 	const int dominant = VR_GetDominantHand(); const int offhand = dominant == VR_CLIENT_HAND_LEFT ? VR_CLIENT_HAND_RIGHT : VR_CLIENT_HAND_LEFT;
-	const vr_client_hand_t *weapon = &g_vrFrame.hands[dominant]; const vr_client_hand_t *support = &g_vrFrame.hands[offhand];
-	if( !viewmodel || !( weapon->flags & VR_CLIENT_HAND_AIM_VALID ) ) { CVAR_SET_FLOAT( "vr_weapon_stabilised", 0.0f ); VR_ReleaseScopeButton(); VR_KillLaser(); return; }
-	Vector weaponOffset, weaponAngles, supportOffset, supportAngles;
-	VR_TransformPose( weapon->aim, params->cl_viewangles[YAW], weaponOffset, weaponAngles ); supportOffset = weaponOffset; supportAngles = weaponAngles;
-	if( support->flags & VR_CLIENT_HAND_AIM_VALID ) VR_TransformPose( support->aim, params->cl_viewangles[YAW], supportOffset, supportAngles );
-	const float separation = ( supportOffset - weaponOffset ).Length(); const float scale = g_vrFrame.world_scale > 0.0f ? g_vrFrame.world_scale : 40.0f;
-	const int stabilised = ( support->flags & VR_CLIENT_HAND_AIM_VALID ) && support->squeeze >= 0.7f && separation > scale * 0.15f && separation < scale * 0.50f;
-	CVAR_SET_FLOAT( "vr_weapon_stabilised", stabilised ? 1.0f : 0.0f ); if( stabilised ) VectorAngles( supportOffset - weaponOffset, weaponAngles );
-	if( g_vrCurrentWeapon == WEAPON_CROWBAR ) weaponAngles[PITCH] += CVAR_GET_FLOAT( "vr_crowbar_pitchadjust" ); else if( !VR_IsThrowable( g_vrCurrentWeapon ) ) weaponAngles[PITCH] += CVAR_GET_FLOAT( "vr_weapon_pitchadjust" );
-	VR_UpdateScope( params, weaponOffset, stabilised ); if( g_vrScopeEngaged && CVAR_GET_FLOAT( "vr_scope_stabilise" ) != 0.0f ) { if( g_vrScopeAnglesValid ) weaponAngles = VR_LerpAngles( g_vrScopeAngles, weaponAngles, VR_Clamp( params->frametime * 8.0f, 0.0f, 1.0f ) ); g_vrScopeAngles = weaponAngles; g_vrScopeAnglesValid = 1; }
-	const Vector weaponVelocity = VR_RotateYaw( weapon->linear_velocity, params->cl_viewangles[YAW] );
-	VR_SendPoseUpdate( params, Vector( params->vieworg ) + weaponOffset, weaponAngles, weaponVelocity, Vector( params->vieworg ) + supportOffset, supportAngles );
-	const Vector weaponOrigin = Vector( params->vieworg ) + weaponOffset;
+	const vr_client_hand_t *support = &g_vrFrame.hands[offhand];
+	vr_weapon_pose_t pose;
+	if( !viewmodel || !VR_GetWeaponPose( params->cl_viewangles[YAW], params->frametime, &pose ) ) { CVAR_SET_FLOAT( "vr_weapon_stabilised", 0.0f ); VR_ReleaseScopeButton(); VR_KillLaser(); return; }
+	VR_SendPoseUpdate( params, Vector( params->vieworg ) + pose.weaponOffset, pose.weaponAngles, pose.weaponVelocity, Vector( params->vieworg ) + pose.supportOffset, pose.supportAngles );
+	const Vector weaponOrigin = Vector( params->vieworg ) + pose.weaponOffset;
 	VectorCopy( weaponOrigin, viewmodel->origin ); VectorCopy( weaponOrigin, viewmodel->curstate.origin ); VectorCopy( weaponOrigin, viewmodel->latched.prevorigin );
-	VectorCopy( weaponAngles, viewmodel->angles ); VectorCopy( weaponAngles, viewmodel->curstate.angles ); VectorCopy( weaponAngles, viewmodel->latched.prevangles ); VectorCopy( weaponVelocity, viewmodel->curstate.velocity );
-	VR_UpdateLaser( weaponOrigin, weaponAngles );
+	VectorCopy( pose.weaponAngles, viewmodel->angles ); VectorCopy( pose.weaponAngles, viewmodel->curstate.angles ); VectorCopy( pose.weaponAngles, viewmodel->latched.prevangles ); VectorCopy( pose.weaponVelocity, viewmodel->curstate.velocity );
+	VR_UpdateLaser( weaponOrigin, pose.weaponAngles );
 	if( !g_vrScopeEngaged && !params->intermission && !params->spectator && !params->onlyClientDraw && params->health > 0 && params->viewentity == params->playernum + 1 && !gEngfuncs.IsSpectateOnly() )
 	{
 		const int hasFlashlight = gHUD.m_Flash.HasFlashlight();
-		if( ( support->flags & VR_CLIENT_HAND_AIM_VALID ) && !hasFlashlight && !stabilised ) VR_AddHandModel( offhand, Vector( params->vieworg ) + supportOffset, supportAngles );
-		if( !viewmodel->model ) VR_AddHandModel( dominant, weaponOrigin, weaponAngles );
-		if( ( support->flags & VR_CLIENT_HAND_AIM_VALID ) && hasFlashlight && !stabilised && CVAR_GET_FLOAT( "vr_headtorch" ) == 0.0f ) { if( CVAR_GET_FLOAT( "vr_reversetorch" ) != 0.0f ) { vec3_t forward; gEngfuncs.pfnAngleVectors( supportAngles, forward, NULL, NULL ); VectorAngles( -Vector( forward ), supportAngles ); } VR_AddTorchModel( Vector( params->vieworg ) + supportOffset, supportAngles ); }
+		if( ( support->flags & VR_CLIENT_HAND_AIM_VALID ) && !hasFlashlight && !pose.stabilised ) VR_AddHandModel( offhand, Vector( params->vieworg ) + pose.supportOffset, pose.supportAngles );
+		if( !viewmodel->model ) VR_AddHandModel( dominant, weaponOrigin, pose.weaponAngles );
+		if( ( support->flags & VR_CLIENT_HAND_AIM_VALID ) && hasFlashlight && !pose.stabilised && CVAR_GET_FLOAT( "vr_headtorch" ) == 0.0f ) { if( CVAR_GET_FLOAT( "vr_reversetorch" ) != 0.0f ) { vec3_t forward; gEngfuncs.pfnAngleVectors( pose.supportAngles, forward, NULL, NULL ); VectorAngles( -Vector( forward ), pose.supportAngles ); } VR_AddTorchModel( Vector( params->vieworg ) + pose.supportOffset, pose.supportAngles ); }
 	}
+}
+
+static int32_t VR_CLIENT_CALL VR_BuildUsercmdSidecar( const vr_client_usercmd_t *cmd, vr_usercmd_sidecar_t *sample )
+{
+	vr_weapon_pose_t pose;
+	int index;
+	if( !cmd || !sample || cmd->struct_size < VR_CLIENT_USERCMD_MIN_SIZE ) return 0;
+	memset( sample, 0, sizeof( *sample ) );
+	if( !VR_GetWeaponPose( cmd->viewangles[YAW], cmd->frametime, &pose ) ) return 0;
+	for( index = 0; index < 3; ++index )
+	{
+		sample->weapon_position[index] = VR_UsercmdSidecarQuantize( pose.weaponOffset[index], 8.0f );
+		sample->weapon_angles[index] = VR_UsercmdSidecarQuantize( pose.weaponAngles[index], 128.0f );
+		sample->weapon_velocity[index] = VR_UsercmdSidecarQuantize( pose.weaponVelocity[index], 8.0f );
+		sample->offhand_position[index] = VR_UsercmdSidecarQuantize( pose.supportOffset[index], 8.0f );
+		sample->offhand_angles[index] = VR_UsercmdSidecarQuantize( pose.supportAngles[index], 128.0f );
+	}
+	sample->version = VR_USERCMD_SIDECAR_VERSION; sample->flags = VR_USERCMD_SIDECAR_POSE_VALID;
+	return 1;
 }
 
 extern "C" int VR_CLIENT_CALL CL_DLLEXPORT HUD_GetVRClientAPI( const vr_client_engine_api_t *enginefuncs, vr_client_api_t *callbacks )
 {
+	uint32_t writableSize;
 	if( !enginefuncs || !callbacks || enginefuncs->version != VR_CLIENT_API_VERSION || enginefuncs->struct_size < VR_CLIENT_ENGINE_API_MIN_SIZE ) return 0;
+	writableSize = callbacks->struct_size ? callbacks->struct_size : VR_CLIENT_API_MIN_SIZE;
+	if( writableSize < VR_CLIENT_API_MIN_SIZE ) return 0;
+	if( writableSize > sizeof( *callbacks ) ) writableSize = sizeof( *callbacks );
 	memset( &g_vrEngineAPI, 0, sizeof( g_vrEngineAPI ) ); memcpy( &g_vrEngineAPI, enginefuncs, sizeof( g_vrEngineAPI ) );
-	memset( callbacks, 0, sizeof( *callbacks ) ); callbacks->version = VR_CLIENT_API_VERSION; callbacks->struct_size = sizeof( *callbacks ); callbacks->Frame = VR_ClientFrame; callbacks->Shutdown = VR_ClientShutdown;
+	memset( callbacks, 0, writableSize ); callbacks->version = VR_CLIENT_API_VERSION; callbacks->struct_size = writableSize; callbacks->Frame = VR_ClientFrame; callbacks->Shutdown = VR_ClientShutdown;
+	if( writableSize >= VR_CLIENT_API_SIDECAR_SIZE ) callbacks->BuildUsercmdSidecar = VR_BuildUsercmdSidecar;
 	return 1;
 }
