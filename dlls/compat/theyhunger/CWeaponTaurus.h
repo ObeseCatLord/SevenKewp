@@ -23,6 +23,6 @@ public:
   }
 
 private:
-  void Fire(float spread, float cycleTime, BOOL useAutoAim);
+  void Fire(float spread, float cycleTime);
   unsigned short m_fireEvent;
 };

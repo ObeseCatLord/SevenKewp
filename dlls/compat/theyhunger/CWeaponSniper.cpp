@@ -1,10 +1,10 @@
-#include "CWeaponSniper.h"
+#include "../../extdll.h"
+#include "../../weapon/weapons.h"
 #include "../../../engine/shake.h"
 #include "../../../game_shared/compat/theyhunger/sniper.h"
-#include "../../extdll.h"
+#include "CWeaponSniper.h"
 #include "../../player/CBasePlayer.h"
 #include "../../weapon/CBasePlayerAmmo.h"
-#include "../../weapon/weapons.h"
 LINK_ENTITY_TO_CLASS(weapon_th_sniper, CWeaponTheyHungerSniper)
 LINK_ENTITY_TO_CLASS(weapon_einar1, CWeaponTheyHungerTFCSniper)
 namespace {
@@ -47,7 +47,7 @@ void HolsterSniper(CBasePlayerWeapon *w, int &z) {
     Zoom(w, z);
   p->m_flNextAttack = UTIL_WeaponTimeBase() + .5f;
 }
-void Fire(CBasePlayerWeapon *w, unsigned short event, int z) {
+void Fire(CBasePlayerWeapon *w, unsigned short event, int z, int emptyAnimation) {
   CBasePlayer *p = w->GetPlayer();
   if (!p)
     return;
@@ -56,9 +56,12 @@ void Fire(CBasePlayerWeapon *w, unsigned short event, int z) {
       w->PlayEmptySound();
       w->m_flNextPrimaryAttack = UTIL_WeaponTimeBase() + .25f;
     }
-    if (w->m_flTimeWeaponIdle > UTIL_WeaponTimeBase())
+    if (w->m_flTimeWeaponIdle > UTIL_WeaponTimeBase()) {
+      if (emptyAnimation >= 0)
+        w->SendWeaponAnim(emptyAnimation);
       w->m_flTimeWeaponIdle = UTIL_WeaponTimeBase() +
                               UTIL_SharedRandomFloat(p->random_seed, 15, 20);
+    }
     return;
   }
   p->m_iWeaponVolume = LOUD_GUN_VOLUME;
@@ -145,7 +148,7 @@ BOOL CWeaponTheyHungerSniper::Deploy() {
 }
 void CWeaponTheyHungerSniper::Holster(int) { HolsterSniper(this, m_inZoom); }
 void CWeaponTheyHungerSniper::PrimaryAttack() {
-  Fire(this, m_fireEvent, m_inZoom);
+  Fire(this, m_fireEvent, m_inZoom, -1);
 }
 void CWeaponTheyHungerSniper::SecondaryAttack() { Zoom(this, m_inZoom); }
 void CWeaponTheyHungerSniper::ToggleScope(BOOL engage) {
@@ -202,7 +205,7 @@ BOOL CWeaponTheyHungerTFCSniper::Deploy() {
 }
 void CWeaponTheyHungerTFCSniper::Holster(int) { HolsterSniper(this, m_inZoom); }
 void CWeaponTheyHungerTFCSniper::PrimaryAttack() {
-  Fire(this, m_fireEvent, m_inZoom);
+  Fire(this, m_fireEvent, m_inZoom, TH_TFC_SNIPER_AUTOIDLE);
 }
 void CWeaponTheyHungerTFCSniper::SecondaryAttack() { Zoom(this, m_inZoom); }
 void CWeaponTheyHungerTFCSniper::ToggleScope(BOOL engage) {

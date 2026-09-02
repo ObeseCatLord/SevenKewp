@@ -1,9 +1,9 @@
+#include "../../extdll.h"
+#include "../../weapon/weapons.h"
 #include "CWeaponTaurus.h"
 #include "../../../game_shared/compat/theyhunger/taurus.h"
-#include "../../extdll.h"
 #include "../../player/CBasePlayer.h"
 #include "../../weapon/CBasePlayerAmmo.h"
-#include "../../weapon/weapons.h"
 LINK_ENTITY_TO_CLASS(weapon_th_taurus, CWeaponTheyHungerTaurus)
 namespace {
 Vector TaurusAim(CBasePlayer *p) {
@@ -59,8 +59,8 @@ int CWeaponTheyHungerTaurus::GetItemInfo(ItemInfo *p) {
 BOOL CWeaponTheyHungerTaurus::Deploy() {
   return DefaultDeploy(GetModelV(), GetModelP(), TH_TAURUS_DRAW2, "onehanded");
 }
-void CWeaponTheyHungerTaurus::PrimaryAttack() { Fire(.04f, .25f, TRUE); }
-void CWeaponTheyHungerTaurus::Fire(float spread, float cycle, BOOL autoaim) {
+void CWeaponTheyHungerTaurus::PrimaryAttack() { Fire(.04f, .25f); }
+void CWeaponTheyHungerTaurus::Fire(float spread, float cycle) {
   CBasePlayer *p = GetPlayer();
   if (!p)
     return;
@@ -76,9 +76,7 @@ void CWeaponTheyHungerTaurus::Fire(float spread, float cycle, BOOL autoaim) {
   p->SetAnimation(PLAYER_ATTACK1);
   p->m_iWeaponVolume = NORMAL_GUN_VOLUME;
   p->m_iWeaponFlash = NORMAL_GUN_FLASH;
-  Vector aim = autoaim && !p->HasFreshVRPose()
-                   ? p->GetAutoaimVector(AUTOAIM_10DEGREES)
-                   : TaurusAim(p);
+  Vector aim = TaurusAim(p);
   lagcomp_begin(p);
   Vector dir = p->FireBulletsPlayer(
       1, p->GetWeaponPosition(), aim, Vector(spread, spread, spread), 8192,
