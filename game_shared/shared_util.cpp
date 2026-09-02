@@ -39,6 +39,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <dirent.h>
+#include <strings.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -538,6 +539,46 @@ std::string normalize_path(std::string s)
 	return s;
 }
 
+#if !defined(WIN32) && !defined(_WIN32)
+static std::string resolvePathCaseInsensitive(const std::string& path)
+{
+	if (path.empty() || fileExists(path.c_str()))
+		return path;
+
+	const std::vector<std::string> parts = splitString(path, "/");
+	std::string resolved = path[0] == '/' ? "/" : "";
+	for (size_t i = 0; i < parts.size(); ++i)
+	{
+		if (parts[i].empty() || parts[i] == ".")
+			continue;
+
+		const std::string directory = resolved.empty() ? "." : resolved;
+		DIR* handle = opendir(directory.c_str());
+		if (!handle)
+			return "";
+
+		std::string actual;
+		for (dirent* entry = readdir(handle); entry; entry = readdir(handle))
+		{
+			if (strcasecmp(entry->d_name, parts[i].c_str()) == 0)
+			{
+				actual = entry->d_name;
+				break;
+			}
+		}
+		closedir(handle);
+		if (actual.empty())
+			return "";
+
+		if (!resolved.empty() && resolved[resolved.size() - 1] != '/')
+			resolved += '/';
+		resolved += actual;
+	}
+
+	return fileExists(resolved.c_str()) ? resolved : "";
+}
+#endif
+
 std::string getGameFilePath(const char* path, bool matchCase) {
 #ifdef CLIENT_DLL
 	const char* gameDir = gEngfuncs.pfnGetGameDirectory();
@@ -573,6 +614,15 @@ std::string getGameFilePath(const char* path, bool matchCase) {
 			if (fileExists(searchUpper.c_str())) {
 				return searchUpper;
 			}
+
+#if !defined(WIN32) && !defined(_WIN32)
+			/* GoldSrc content was authored for case-insensitive filesystems. Xash's
+			 * VFS resolves those names on Linux, so return the matching physical
+			 * spelling for SevenKewp's direct parsers and precache checks too. */
+			std::string resolved = resolvePathCaseInsensitive(searchUpper);
+			if (!resolved.empty())
+				return resolved;
+#endif
 		}
 	}
 
