@@ -581,6 +581,9 @@ void ClientCommand(edict_t* pEntity)
 				return;
 		}
 
+		if (pPlayer->HasFreshUsercmdVRPose())
+			return;
+
 		pPlayer->UpdateVRPose(
 			Vector(values[0], values[1], values[2]),
 			Vector(values[3], values[4], values[5]),

@@ -17,6 +17,7 @@
 
 
 #include "pm_materials.h"
+#include "vr_usercmd_sidecar.h"
 #include "../dlls/monster/CBaseMonster.h"
 #include "usercmd.h"
 #include "../dlls/player/player_const.h"
@@ -231,6 +232,7 @@ public:
 	virtual void PostThink( void ) STUB_VOID;
 	virtual Vector GetGunPosition( void );
 	BOOL HasFreshVRPose( void ) const;
+	BOOL HasFreshUsercmdVRPose( void ) const;
 	Vector GetWeaponPosition( void ) const;
 	Vector GetWeaponAngles( void ) const;
 	Vector GetWeaponViewAngles( void ) const;
@@ -239,6 +241,7 @@ public:
 	Vector GetOffhandAngles( void ) const;
 	BOOL UpdateVRPose( const Vector& weaponPosition, const Vector& weaponAngles,
 		const Vector& weaponVelocity, const Vector& offhandPosition, const Vector& offhandAngles );
+	BOOL UpdateVRPoseSidecar( const vr_usercmd_sidecar_t *sample );
 	void SetVRUse2State( BOOL down );
 	void ClearVRPose( void );
 	int VRHighlightMode( const CBaseEntity* entity );
@@ -588,6 +591,7 @@ private:
 	Vector m_vecVROffhandPosition;
 	Vector m_vecVROffhandAngles;
 	float m_flVRPoseTime;
+	float m_flVRUsercmdPoseTime;
 	BOOL m_bVRUse2;
 	BOOL m_bVRUse2Pressed;
 	BOOL m_bVRUse2Released;

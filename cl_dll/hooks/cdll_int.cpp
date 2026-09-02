@@ -156,6 +156,16 @@ void CL_DLLEXPORT HUD_PlayerMove( struct playermove_s *ppmove, int server )
 	PM_Move( ppmove, server );
 }
 
+extern "C" void CL_DLLEXPORT VR_BeginPMUsercmdSidecar( const vr_usercmd_sidecar_t *sample )
+{
+	PM_VRBeginUsercmdSidecar( sample );
+}
+
+extern "C" void CL_DLLEXPORT VR_EndPMUsercmdSidecar( void )
+{
+	PM_VREndUsercmdSidecar();
+}
+
 void ReconnectAfterUpdate();
 void init_weapon_custom_config_parser();
 

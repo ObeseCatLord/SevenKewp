@@ -47,4 +47,12 @@ static inline int16_t VR_UsercmdSidecarQuantize( float value, float scale )
 	return (int16_t)quantized;
 }
 
+#define VR_USERCMD_SIDECAR_BEGIN_PM_EXPORT "VR_BeginPMUsercmdSidecar"
+#define VR_USERCMD_SIDECAR_END_PM_EXPORT "VR_EndPMUsercmdSidecar"
+#define VR_USERCMD_SIDECAR_UPDATE_POSE_EXPORT "VR_UpdateUsercmdVRPose"
+
+typedef void (*vr_usercmd_sidecar_begin_pm_t)( const vr_usercmd_sidecar_t *sample );
+typedef void (*vr_usercmd_sidecar_end_pm_t)( void );
+typedef void (*vr_usercmd_sidecar_update_pose_t)( void *player, const vr_usercmd_sidecar_t *sample );
+
 #endif /* VR_USERCMD_SIDECAR_H */

@@ -22,6 +22,8 @@
 
 #include "extdll.h"
 #include "util.h"
+#include "CBasePlayer.h"
+#include "pm_shared.h"
 
 // Holds engine functionality callbacks
 enginefuncs_t g_engfuncs;
@@ -33,6 +35,22 @@ globalvars_t  *gpGlobals;
 #else
 #define DLLEXPORT __attribute__ ((visibility("default")))
 #endif
+
+extern "C" void DLLEXPORT VR_BeginPMUsercmdSidecar( const vr_usercmd_sidecar_t *sample )
+{
+	PM_VRBeginUsercmdSidecar( sample );
+}
+
+extern "C" void DLLEXPORT VR_EndPMUsercmdSidecar( void )
+{
+	PM_VREndUsercmdSidecar();
+}
+
+extern "C" void DLLEXPORT VR_UpdateUsercmdVRPose( void *player, const vr_usercmd_sidecar_t *sample )
+{
+	if( player && sample )
+		GetClassPtr( (CBasePlayer *)&((edict_t *)player)->v )->UpdateVRPoseSidecar( sample );
+}
 
 #ifdef _WIN32
 
@@ -51,5 +69,3 @@ extern "C" void DLLEXPORT GiveFnptrsToDll(	enginefuncs_t* pengfuncsFromEngine, g
 	memcpy(&g_engfuncs, pengfuncsFromEngine, sizeof(enginefuncs_t));
 	gpGlobals = pGlobals;
 }
-
-

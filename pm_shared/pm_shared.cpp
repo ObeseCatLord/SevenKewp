@@ -45,6 +45,28 @@ const char* UTIL_GetReplacementSound(edict_t* ent, const char* sound);
 
 static int pm_shared_initialized = 0;
 
+/* The engine brackets every PM call with these helpers. This state is
+ * deliberately transient and is cleared immediately after PM returns. */
+static vr_usercmd_sidecar_t pm_vr_usercmd_sidecar;
+static int pm_vr_usercmd_sidecar_active;
+
+void PM_VRBeginUsercmdSidecar( const vr_usercmd_sidecar_t *sample )
+{
+	memset( &pm_vr_usercmd_sidecar, 0, sizeof( pm_vr_usercmd_sidecar ) );
+	pm_vr_usercmd_sidecar_active = 0;
+	if( sample && sample->version == VR_USERCMD_SIDECAR_VERSION )
+	{
+		pm_vr_usercmd_sidecar = *sample;
+		pm_vr_usercmd_sidecar_active = 1;
+	}
+}
+
+void PM_VREndUsercmdSidecar( void )
+{
+	memset( &pm_vr_usercmd_sidecar, 0, sizeof( pm_vr_usercmd_sidecar ) );
+	pm_vr_usercmd_sidecar_active = 0;
+}
+
 //Because physics code is now compiled as C++ it conflicts with the version in util.cpp
 //That version is actually considered to be Vector vec3_origin, so some compilers will fail to link it
 //Until the code for vectors is rewritten to allow for a single definition on client and server, this separate version is needed
@@ -2240,7 +2262,18 @@ void PM_LadderMove( physent_t *pLadder )
 			flSpeed = pmove->maxspeed;
 		}
 
-		AngleVectors( pmove->angles, vpn, v_right, NULL );
+		if( pm_vr_usercmd_sidecar_active &&
+			pm_vr_usercmd_sidecar.version == VR_USERCMD_SIDECAR_VERSION &&
+			( pm_vr_usercmd_sidecar.flags & VR_USERCMD_SIDECAR_LADDER_VALID ) )
+		{
+			vec3_t controllerAngles;
+			controllerAngles[PITCH] = pm_vr_usercmd_sidecar.ladder_angles[0] * ( 1.0f / 128.0f );
+			controllerAngles[YAW] = pm_vr_usercmd_sidecar.ladder_angles[1] * ( 1.0f / 128.0f );
+			controllerAngles[ROLL] = 0.0f;
+			AngleVectors( controllerAngles, vpn, v_right, NULL );
+		}
+		else
+			AngleVectors( pmove->angles, vpn, v_right, NULL );
 
 		if ( pmove->flags & FL_DUCKING )
 		{

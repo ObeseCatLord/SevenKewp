@@ -20,9 +20,13 @@
 #define PM_SHAREDH
 #pragma once
 
+#include "vr_usercmd_sidecar.h"
+
 void PM_Init( struct playermove_s *ppmove );
 void PM_Move ( struct playermove_s *ppmove, int server );
 char PM_FindTextureType( char *name );
+void PM_VRBeginUsercmdSidecar( const vr_usercmd_sidecar_t *sample );
+void PM_VREndUsercmdSidecar( void );
 extern "C" void PM_DropPunchAngle(float* punchangle);
 int LoadCustomMaterials(const char* fpath);
 
