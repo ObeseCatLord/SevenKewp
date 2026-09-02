@@ -418,6 +418,8 @@ float CBasePlayer::GetDamage(float defaultDamage) {
 	return defaultDamage;
 }
 
+int CBasePlayer::GetAmmoIndex(const char* psz) { return -1; }
+
 Vector CBasePlayer::GetGunPosition(void) {
 	return GetWeaponPosition();
 }

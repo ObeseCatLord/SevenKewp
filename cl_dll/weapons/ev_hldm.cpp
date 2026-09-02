@@ -48,6 +48,7 @@ static void VR_HapticLocalWeaponFire( int idx, int bulletType )
 
 void V_PunchAxis( int axis, float punch );
 void VectorAngles( const float *forward, float *angles );
+void EV_GetWeaponEventPose( struct event_args_s *args, float *origin, float *angles, float *velocity );
 
 extern cvar_t *cl_lw;
 
@@ -76,7 +77,6 @@ void EV_SnarkFire( struct event_args_s *args  );
 
 
 void EV_TrainPitchAdjust( struct event_args_s *args );
-void EV_GetWeaponEventPose( struct event_args_s *args, float *origin, float *angles, float *velocity );
 }
 
 #define VECTOR_CONE_1DEGREES Vector( 0.00873, 0.00873, 0.00873 )

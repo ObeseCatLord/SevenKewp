@@ -12,19 +12,8 @@
 #include "../../game_shared/compat/theyhunger/taurus.h"
 #include "../../game_shared/compat/theyhunger/sniper.h"
 void V_PunchAxis(int axis, float punch);
+void EV_GetWeaponEventPose(event_args_t* args, float* origin, float* angles, float* velocity);
 namespace {
-void Pose(event_args_t *a, vec3_t o, vec3_t an, vec3_t v) {
-  VectorCopy(a->origin, o);
-  VectorCopy(a->angles, an);
-  VectorCopy(a->velocity, v);
-  cl_entity_t *vm = gEngfuncs.GetViewModel();
-  if (vm && VR_IsActive()) {
-    VectorCopy(vm->curstate.origin, o);
-    VectorCopy(vm->curstate.angles, an);
-    an[PITCH] = -an[PITCH];
-    VectorCopy(vm->curstate.velocity, v);
-  }
-}
 void Haptic(int i, int bullet) {
   if (!EV_IsLocal(i))
     return;
@@ -36,7 +25,7 @@ void Sniper(event_args_t *a, bool tfc) {
   if (!i)
     return;
   vec3_t o, an, v, s, aim, u, r, f;
-  Pose(a, o, an, v);
+  EV_GetWeaponEventPose(a, o, an, v);
   AngleVectors(an, f, r, u);
   int scoped = a->bparam1;
   if (EV_IsLocal(i)) {
@@ -69,7 +58,7 @@ extern "C" void EV_FireTaurus(event_args_t *a) {
   if (!i)
     return;
   vec3_t o, an, v, s, aim, u, r, f;
-  Pose(a, o, an, v);
+  EV_GetWeaponEventPose(a, o, an, v);
   AngleVectors(an, f, r, u);
   if (EV_IsLocal(i)) {
     EV_MuzzleFlash();
