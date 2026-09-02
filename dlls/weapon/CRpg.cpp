@@ -190,9 +190,13 @@ void CRpgRocket :: Spawn( void )
 	SetThink( &CRpgRocket::IgniteThink );
 	SetTouch( &CRpgRocket::ExplodeTouch );
 
-	pev->angles.x -= 30;
-	UTIL_MakeVectors( pev->angles );
-	pev->angles.x = -(pev->angles.x + 30);
+	// Keep the controller-space angles on the rocket. Lambda1VR applies the
+	// historical 30-degree launch correction only while deriving velocity;
+	// mutating pev->angles here inverts tracked pitch and makes subsequent
+	// guidance disagree with the launch direction.
+	Vector launchAngles = pev->angles;
+	launchAngles.x = -launchAngles.x - 30.0f;
+	UTIL_MakeVectors( launchAngles );
 
 	pev->velocity = gpGlobals->v_forward * 250;
 	pev->gravity = 0.5;
@@ -619,6 +623,15 @@ void CRpg::PrimaryAttack()
 		Vector vecSrc = m_pPlayer->GetWeaponPosition() + gpGlobals->v_forward * 16 + gpGlobals->v_right * 8 + gpGlobals->v_up * -8;
 		
 		CRpgRocket *pRocket = CRpgRocket::CreateRpgRocket(vecSrc, m_pPlayer->GetWeaponAngles(), m_pPlayer, this);
+		if (CVAR_GET_FLOAT("developer") >= 2.0f)
+		{
+			const Vector launchAngles = m_pPlayer->GetWeaponAngles();
+			ALERT(at_console,
+				"RPG launch: tracked=%d source=(%.2f %.2f %.2f) angles=(%.2f %.2f %.2f) velocity=(%.2f %.2f %.2f)\n",
+				m_pPlayer->HasFreshVRPose() ? 1 : 0, vecSrc.x, vecSrc.y, vecSrc.z,
+				launchAngles.x, launchAngles.y, launchAngles.z,
+				pRocket->pev->velocity.x, pRocket->pev->velocity.y, pRocket->pev->velocity.z);
+		}
 
 		UTIL_MakeVectors(m_pPlayer->GetWeaponViewAngles());// RpgRocket::Create stomps on globals, so remake.
 		pRocket->pev->velocity = pRocket->pev->velocity + gpGlobals->v_forward * DotProduct( m_pPlayer->pev->velocity, gpGlobals->v_forward );
