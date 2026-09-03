@@ -36,17 +36,17 @@ globalvars_t  *gpGlobals;
 #define DLLEXPORT __attribute__ ((visibility("default")))
 #endif
 
-extern "C" void DLLEXPORT VR_BeginPMUsercmdSidecar( const vr_usercmd_sidecar_t *sample )
+extern "C" VR_USERCMD_SIDECAR_EXPORT void VR_USERCMD_SIDECAR_CALL VR_BeginPMUsercmdSidecar( const vr_usercmd_sidecar_t *sample )
 {
 	PM_VRBeginUsercmdSidecar( sample );
 }
 
-extern "C" void DLLEXPORT VR_EndPMUsercmdSidecar( void )
+extern "C" VR_USERCMD_SIDECAR_EXPORT void VR_USERCMD_SIDECAR_CALL VR_EndPMUsercmdSidecar( void )
 {
 	PM_VREndUsercmdSidecar();
 }
 
-extern "C" void DLLEXPORT VR_UpdateUsercmdVRPose( void *player, const vr_usercmd_sidecar_t *sample )
+extern "C" VR_USERCMD_SIDECAR_EXPORT void VR_USERCMD_SIDECAR_CALL VR_UpdateUsercmdVRPose( void *player, const vr_usercmd_sidecar_t *sample )
 {
 	if( player && sample )
 		GetClassPtr( (CBasePlayer *)&((edict_t *)player)->v )->UpdateVRPoseSidecar( sample );
