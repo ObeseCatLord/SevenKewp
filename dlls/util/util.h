@@ -90,8 +90,23 @@ enum AdminLevel {
 EXPORT extern HashMap<int> g_merged_models;
 
 // Use this instead of ALLOC_STRING on constant strings
+#if defined(__LP64__) || defined(_LP64)
+#define STRING(offset)		((const char *)(gpGlobals->pStringBase + (int32_t)(offset)))
+inline string_t MAKE_STRING(const char* str) {
+	const intptr_t offset = (intptr_t)str - (intptr_t)STRING(0);
+
+	// The 32-bit SDK stores pointer-relative strings in a string_t via wraparound.
+	// On LP64, allocate strings outside the 32-bit offset range instead of truncating them.
+	if (offset > INT32_MAX || offset < INT32_MIN) {
+		return ALLOC_STRING(str);
+	}
+
+	return (string_t)offset;
+}
+#else
 #define STRING(offset)		((const char *)(gpGlobals->pStringBase + (unsigned int)(offset)))
 #define MAKE_STRING(str)	((uint64)(str) - (uint64)(STRING(0))) // NEVER USE THIS IN PLUGINS
+#endif
 
 // swap 2 values
 #define SWAP(a, b, T) { \
