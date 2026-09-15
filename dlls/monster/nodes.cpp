@@ -515,7 +515,7 @@ int CGraph::NextNodeInRoute( int iCurrentNode, int iDest, int iHull, int iCap )
 {
 	int iNext = iCurrentNode;
 	int nCount = iDest+1;
-	char *pRoute = m_pRouteInfo + m_pNodes[ iCurrentNode ].m_pNextBestNode[iHull][iCap];
+	const unsigned char *pRoute = m_pRouteInfo + m_pNodes[ iCurrentNode ].m_pNextBestNode[iHull][iCap];
 
 	// Until we decode the next best node
 	//
@@ -527,13 +527,13 @@ int CGraph::NextNodeInRoute( int iCurrentNode, int iDest, int iHull, int iCap )
 			return iCurrentNode;
 		}
 
-		char ch = *pRoute++;
+		int ch = *pRoute++;
 		//ALERT(at_aiconsole, "C(%d)", ch);
-		if (ch < 0)
+		if (ch & 0x80)
 		{
 			// Sequence phrase
 			//
-			ch = -ch;
+			ch = RouteSequenceLength(static_cast<unsigned char>(ch));
 			if (nCount <= ch)
 			{
 				iNext = iDest;
@@ -554,7 +554,7 @@ int CGraph::NextNodeInRoute( int iCurrentNode, int iDest, int iHull, int iCap )
 			//
 			if (nCount <= ch+1)
 			{
-				iNext = iCurrentNode + *pRoute;
+				iNext = iCurrentNode + RouteByteToDelta(*pRoute);
 				if (iNext >= m_cNodes) iNext -= m_cNodes;
 				else if (iNext < 0) iNext += m_cNodes;
 				nCount = 0;
@@ -2440,7 +2440,7 @@ int CGraph :: FLoadGraph ( char *szMapName )
 		// Malloc for the routing info.
 		//
 		m_fRoutingComplete = FALSE;
-		m_pRouteInfo = (char *)calloc( sizeof(char), m_nRouteInfo );
+		m_pRouteInfo = (unsigned char *)calloc( sizeof(*m_pRouteInfo), m_nRouteInfo );
 		if ( !m_pRouteInfo )
 		{
 			ALERT ( at_aiconsole, "***ERROR**\nCounldn't malloc %d route bytes!\n", m_nRouteInfo );
@@ -2454,10 +2454,10 @@ int CGraph :: FLoadGraph ( char *szMapName )
 		
 		// Read in the route information.
 		//
-		length -= sizeof(char)*m_nRouteInfo;
+		length -= sizeof(*m_pRouteInfo)*m_nRouteInfo;
 		if (length < 0) goto ShortFile;
-		memcpy(m_pRouteInfo, pMemFile, sizeof(char)*m_nRouteInfo);
-		pMemFile += sizeof(char)*m_nRouteInfo;
+		memcpy(m_pRouteInfo, pMemFile, sizeof(*m_pRouteInfo)*m_nRouteInfo);
+		pMemFile += sizeof(*m_pRouteInfo)*m_nRouteInfo;
 		m_fRoutingComplete = TRUE;;
 
 		// malloc for the hash links
@@ -2557,7 +2557,7 @@ int CGraph :: FSaveGraph ( char *szMapName )
 		//
 		if ( m_pRouteInfo && m_nRouteInfo )
 		{
-			fwrite ( m_pRouteInfo, sizeof( char ), m_nRouteInfo, file );
+			fwrite ( m_pRouteInfo, sizeof( *m_pRouteInfo ), m_nRouteInfo, file );
 		}
 
 		if (m_pHashLinks && m_nHashLinks)
@@ -3064,7 +3064,7 @@ void CGraph :: ComputeStaticRoutingTables( void )
 
 	int *pMyPath = new int[m_cNodes];
 	unsigned short *BestNextNodes = new unsigned short[m_cNodes];
-	char *pRoute = new char[m_cNodes*2];
+	unsigned char *pRoute = new unsigned char[m_cNodes*2];
 
 
 	if (Routes && pMyPath && BestNextNodes && pRoute)
@@ -3160,7 +3160,7 @@ void CGraph :: ComputeStaticRoutingTables( void )
 					int cSequence = 0;
 					int cRepeats = 0;
 					int CompressedSize = 0;
-					char *p = pRoute;
+					unsigned char *p = pRoute;
 					for (int i = 0; i < m_cNodes; i++)
 					{
 						BOOL CanRepeat = ((BestNextNodes[i] == iLastNode) && cRepeats < 127);
@@ -3183,15 +3183,15 @@ void CGraph :: ComputeStaticRoutingTables( void )
 								int c = iLastNode - iFrom - m_cNodes;
 								if (-128 <= a && a <= 127)
 								{
-									*p++ = a;
+									*p++ = RouteDeltaByte(a);
 								}
 								else if (-128 <= b && b <= 127)
 								{
-									*p++ = b;
+									*p++ = RouteDeltaByte(b);
 								}
 								else if (-128 <= c && c <= 127)
 								{
-									*p++ = c;
+									*p++ = RouteDeltaByte(c);
 								}
 								else
 								{
@@ -3237,7 +3237,7 @@ void CGraph :: ComputeStaticRoutingTables( void )
 									// Emit the sequence phrase.
 									//
 									CompressedSize += 1; // (-count)
-									*p++ = -cSequence;
+									*p++ = RouteSequenceByte(cSequence);
 									cSequence = 0;
 
 									// Start a repeat sequence.
@@ -3279,15 +3279,15 @@ void CGraph :: ComputeStaticRoutingTables( void )
 						int c = iLastNode - iFrom - m_cNodes;
 						if (-128 <= a && a <= 127)
 						{
-							*p++ = a;
+							*p++ = RouteDeltaByte(a);
 						}
 						else if (-128 <= b && b <= 127)
 						{
-							*p++ = b;
+							*p++ = RouteDeltaByte(b);
 						}
 						else if (-128 <= c && c <= 127)
 						{
-							*p++ = c;
+							*p++ = RouteDeltaByte(c);
 						}
 						else
 						{
@@ -3299,7 +3299,7 @@ void CGraph :: ComputeStaticRoutingTables( void )
 						// Emit the Sequence phrase.
 						//
 						CompressedSize += 1;
-						*p++ = -cSequence;
+						*p++ = RouteSequenceByte(cSequence);
 					}
 
 					// Go find a place to store this thing and point to it.
@@ -3321,7 +3321,7 @@ void CGraph :: ComputeStaticRoutingTables( void )
 						}
 						else
 						{
-							char *Tmp = (char *)calloc(sizeof(char), (m_nRouteInfo + nRoute));
+							unsigned char *Tmp = (unsigned char *)calloc(sizeof(*Tmp), (m_nRouteInfo + nRoute));
 							memcpy(Tmp, m_pRouteInfo, m_nRouteInfo);
 							free(m_pRouteInfo);
 							m_pRouteInfo = Tmp;
@@ -3334,7 +3334,7 @@ void CGraph :: ComputeStaticRoutingTables( void )
 					else
 					{
 						m_nRouteInfo = nRoute;
-						m_pRouteInfo = (char *)calloc(sizeof(char), nRoute);
+						m_pRouteInfo = (unsigned char *)calloc(sizeof(*m_pRouteInfo), nRoute);
 						memcpy(m_pRouteInfo, pRoute, nRoute);
 						m_pNodes[ iFrom ].m_pNextBestNode[iHull][iCap] = 0;
 						nTotalCompressedSize += CompressedSize;
@@ -3656,4 +3656,3 @@ void CNodeViewer :: DrawThink( void )
 		m_iDraw++;
 	}
 }
-

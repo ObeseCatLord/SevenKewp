@@ -31,6 +31,29 @@
 
 #include "../dlls/CBaseEntity.h"
 
+// The compressed routing table is an octet stream. High-bit control bytes and
+// repeat deltas use the legacy signed-byte representation, independent of the
+// compiler's plain-char signedness.
+inline unsigned char RouteSequenceByte(int count)
+{
+	return static_cast<unsigned char>(256 - count);
+}
+
+inline int RouteSequenceLength(unsigned char routeByte)
+{
+	return 256 - routeByte;
+}
+
+inline unsigned char RouteDeltaByte(int delta)
+{
+	return static_cast<unsigned char>(delta);
+}
+
+inline int RouteByteToDelta(unsigned char routeByte)
+{
+	return routeByte < 128 ? routeByte : routeByte - 256;
+}
+
 //=========================================================
 // Instance of a node.
 //=========================================================
@@ -127,7 +150,7 @@ public:
 
 	CNode	*m_pNodes;// pointer to the memory block that contains all node info
 	CLink	*m_pLinkPool;// big list of all node connections
-	char    *m_pRouteInfo; // compressed routing information the nodes use.
+	unsigned char *m_pRouteInfo; // compressed routing information the nodes use.
 
 	int		m_cNodes;// total number of nodes
 	int		m_cLinks;// total number of links
