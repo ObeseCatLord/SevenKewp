@@ -792,6 +792,14 @@ set_source_files_properties(${ENT_SRC} PROPERTIES HEADER_FILE_ONLY TRUE)
 
 add_library(${SERVER_DLL_NAME} SHARED ${ALL_SRC})
 
+string(TOLOWER "${CMAKE_SYSTEM_PROCESSOR}" SERVER_TARGET_PROCESSOR)
+if(NOT SERVER_TARGET_PROCESSOR MATCHES "^(x86_64|amd64|i[3-6]86|x86)$")
+	# REHLDS public osconfig.h unconditionally includes x86 intrinsic headers,
+	# although the interface consumed by this target does not use them.
+	target_include_directories(${SERVER_DLL_NAME} BEFORE PRIVATE
+		${CMAKE_CURRENT_SOURCE_DIR}/compat/rehlds_nonx86)
+endif()
+
 target_include_directories(${SERVER_DLL_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/external/curl/include/)
 
 target_include_directories(${SERVER_DLL_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/dlls/env)
@@ -826,7 +834,6 @@ if(UNIX)
 	set(OPT_FLAG "-O2")
 	# The dedicated server DLL remains 32-bit on x86, but -m32 is not
 	# supported by native non-x86 targets such as aarch64.
-	string(TOLOWER "${CMAKE_SYSTEM_PROCESSOR}" SERVER_TARGET_PROCESSOR)
 	set(SERVER_ARCH_FLAGS "")
 	if(SERVER_TARGET_PROCESSOR MATCHES "^(x86_64|amd64|i[3-6]86|x86)$")
 		set(SERVER_ARCH_FLAGS "-m32 ")
