@@ -1812,6 +1812,9 @@ void ExtractCommandString( char *s, char *szCommand )
 }
 
 mapcycle_item_t* CHalfLifeMultiplay::GetMapCyleMap(const char* current_map) {
+	// World activation needs series membership before the first ChangeLevel.
+	if (!mapcycle.items)
+		RefreshMapCycle();
 	if (!mapcycle.items) {
 		return NULL;
 	}
@@ -1844,18 +1847,16 @@ ChangeLevel
 Server is changing to a new level, check mapcycle.txt for map name and setup info
 ==============
 */
-void CHalfLifeMultiplay :: ChangeLevel( void )
+bool CHalfLifeMultiplay::RefreshMapCycle()
 {
 	static char szPreviousMapCycleFile[ 256 ];
 	static uint64_t lastMapCycleModifyTime = 0;
-
-	BOOL do_cycle = TRUE;
 
 	// find the map to change to
 	char *mapcfile = (char*)CVAR_GET_STRING( "mapcyclefile" );
 	ASSERT( mapcfile != NULL );
 
-	bool shouldReloadMapCycle = false;
+	bool shouldReloadMapCycle = !mapcycle.items;
 
 	// Has the map cycle filename changed?
 	if (stricmp(mapcfile, szPreviousMapCycleFile)) {
@@ -1878,9 +1879,14 @@ void CHalfLifeMultiplay :: ChangeLevel( void )
 		if (!ReloadMapCycleFile(mapcfile, &mapcycle) || (!mapcycle.items))
 		{
 			ALERT(at_console, "Unable to load map cycle file %s\n", mapcfile);
-			do_cycle = FALSE;
 		}
 	}
+	return mapcycle.items != NULL;
+}
+
+void CHalfLifeMultiplay :: ChangeLevel( void )
+{
+	const BOOL do_cycle = RefreshMapCycle();
 
 	// restart map if no cycle defined
 	const char* current_map = STRING(gpGlobals->mapname);
