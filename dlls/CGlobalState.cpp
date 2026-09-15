@@ -2,6 +2,7 @@
 #include "util.h"
 #include "decals.h"
 #include "CBasePlayer.h"
+#include "gamerules.h"
 
 CGlobalState					gGlobalState;
 
@@ -200,6 +201,10 @@ void RestoreGlobalState(SAVERESTOREDATA* pSaveData)
 
 void ResetGlobalState(void)
 {
-	gGlobalState.ClearStates();
+	// Xash calls this for ordinary multiplayer changelevel as well. Campaign
+	// globals are owned by CWorld's series check, which clears them on a new
+	// campaign and preserves them between maps belonging to the same series.
+	if (!g_pGameRules || !g_pGameRules->IsMultiplayer())
+		gGlobalState.ClearStates();
 	gInitHUD = TRUE;	// Init the HUD on a new game / load game
 }
