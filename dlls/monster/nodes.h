@@ -107,7 +107,15 @@ typedef struct
 //=========================================================
 // CGraph 
 //=========================================================
-#define	GRAPH_VERSION	(int)16// !!!increment this whever graph/node/link classes change, to obsolesce older disk files.
+// Graph files contain native CGraph/CNode/CLink layouts, including pointers.
+// Keep legacy x86 caches compatible, but never read them as a 64-bit layout.
+#if defined(__LP64__) || defined(_LP64)
+#define GRAPH_VERSION 0x10010
+#elif defined(_WIN64)
+#define GRAPH_VERSION 0x20010
+#else
+#define GRAPH_VERSION 16
+#endif
 class CGraph
 {
 public:

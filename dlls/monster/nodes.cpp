@@ -2494,6 +2494,9 @@ int CGraph :: FLoadGraph ( char *szMapName )
 ShortFile:
 NoMemory:
 	FREE_FILE(aMemFile);
+	// A partial native-layout read may have restored the 'ready' flags before
+	// running out of data. Discard owned allocations and let node generation run.
+	InitGraph();
 	return FALSE;
 }
 
@@ -3653,5 +3656,4 @@ void CNodeViewer :: DrawThink( void )
 		m_iDraw++;
 	}
 }
-
 
