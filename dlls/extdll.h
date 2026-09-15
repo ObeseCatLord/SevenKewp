@@ -23,7 +23,12 @@
 #include "Platform.h"
 
 // Header file containing definition of globalvars_t and entvars_t
-typedef unsigned int func_t;					//
+// Function indices carry native function addresses on LP64 Xash builds.
+#if defined(__LP64__) || defined(_LP64)
+typedef unsigned long func_t;
+#else
+typedef unsigned int func_t;
+#endif
 typedef unsigned int string_t;				// from engine's pr_comp.h;
 typedef float vec_t;				// needed before including progdefs.h
 

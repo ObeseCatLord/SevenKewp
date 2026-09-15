@@ -566,13 +566,15 @@ template <> const char* HashMap<bool>::str(void* value) { return UTIL_VarArgs("%
 template <> const char* HashMap<char>::str(void* value) { return UTIL_VarArgs("%d", (int)*(char*)value); }
 template <> const char* HashMap<short>::str(void* value) { return UTIL_VarArgs("%d", (int)*(short*)value); }
 template <> const char* HashMap<int>::str(void* value) { return UTIL_VarArgs("%d", *(int*)value); }
-template <> const char* HashMap<long>::str(void* value) { return UTIL_VarArgs("%d", *(long*)value); }
+template <> const char* HashMap<long>::str(void* value) { return UTIL_VarArgs("%ld", *(long*)value); }
 template <> const char* HashMap<uint8_t>::str(void* value) { return UTIL_VarArgs("%u", *(uint8_t*)value); }
 template <> const char* HashMap<uint16_t>::str(void* value) { return UTIL_VarArgs("%u", *(uint16_t*)value); }
 template <> const char* HashMap<uint32_t>::str(void* value) { return UTIL_VarArgs("%u", *(uint32_t*)value); }
-template <> const char* HashMap<unsigned long>::str(void* value) { return UTIL_VarArgs("%u", *(unsigned long*)value); }
-template <> const char* HashMap<int64_t>::str(void* value) { return UTIL_VarArgs("%ll", *(int64_t*)value); }
+template <> const char* HashMap<unsigned long>::str(void* value) { return UTIL_VarArgs("%lu", *(unsigned long*)value); }
+#if !defined(__LP64__) && !defined(_LP64)
+template <> const char* HashMap<int64_t>::str(void* value) { return UTIL_VarArgs("%lld", *(int64_t*)value); }
 template <> const char* HashMap<uint64_t>::str(void* value) { return UTIL_VarArgs("%llu", *(uint64_t*)value); }
+#endif
 template <> const char* HashMap<float>::str(void* value) { return UTIL_VarArgs("%f", *(float*)value); }
 template <> const char* HashMap<double>::str(void* value) { return UTIL_VarArgs("%f", *(double*)value); }
 template <> const char* HashMap<long double>::str(void* value) { return UTIL_VarArgs("%Lf", *(long double*)value); }

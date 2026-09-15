@@ -1,6 +1,8 @@
 #pragma once
 #include "PluginHooks.h"
+#include <cstdint>
 #include <functional>
+#include <type_traits>
 #include <vector>
 #include "const.h"
 
@@ -22,13 +24,27 @@ struct Plugin {
 
 typedef void(*ENTITYINIT)(struct entvars_s*);
 
+template<typename T, bool IsPointer = std::is_pointer<T>::value>
+struct HookReturnDataConverter {
+	static T Convert(void* data) {
+		return static_cast<T>(reinterpret_cast<std::intptr_t>(data));
+	}
+};
+
+template<typename T>
+struct HookReturnDataConverter<T, true> {
+	static T Convert(void* data) {
+		return static_cast<T>(data);
+	}
+};
+
 #define CALL_HOOKS_VOID(...) \
 	if (g_pluginManager.CallHooks(&HLCOOP_PLUGIN_HOOKS::__VA_ARGS__).code & HOOKBIT_OVERRIDE) { return; }
 
 #define CALL_HOOKS(type, ...) { \
 	HOOK_RETURN_DATA ret = g_pluginManager.CallHooks(&HLCOOP_PLUGIN_HOOKS::__VA_ARGS__); \
 	if (ret.code & HOOKBIT_OVERRIDE) { \
-		return (type)ret.data; \
+		return HookReturnDataConverter<type>::Convert(ret.data); \
 	} \
 }
 

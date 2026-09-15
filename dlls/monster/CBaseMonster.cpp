@@ -5722,7 +5722,7 @@ void CBaseMonster::MaintainSchedule(void)
 						GetTaskName(m_pSchedule->pTasklist[m_iScheduleIndex].iTask), m_iScheduleIndex);
 				}
 				else {
-					ALERT(at_aiconsole, "Schedule %u Failed at %d!\n", (uint32_t)m_pSchedule, m_iScheduleIndex);
+					ALERT(at_aiconsole, "Schedule %p Failed at %d!\n", static_cast<void*>(m_pSchedule), m_iScheduleIndex);
 				}
 				ChangeSchedule(pNewSchedule);
 			}

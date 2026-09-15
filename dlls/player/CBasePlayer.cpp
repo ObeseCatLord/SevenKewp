@@ -6524,7 +6524,7 @@ void CBasePlayer::DropAmmo(bool secondary) {
 		}
 		else {
 			UTIL_Remove(ammoEnt);
-			ALERT(at_console, "Failed to drop ammo for exhaustible weapon %s\n", STRING(ammoEntName));
+			ALERT(at_console, "Failed to drop ammo for exhaustible weapon %s\n", ammoEntName);
 		}
 		
 	}

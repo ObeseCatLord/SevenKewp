@@ -1,7 +1,13 @@
 #include "extdll.h"
+#include <cstdint>
 #include "util.h"
 #include "CBaseEntity.h"
 #include "saverestore.h"
+
+static_assert(sizeof(BASEPTR) >= sizeof(func_t), "FIELD_FUNCTION storage must hold func_t");
+#ifdef GNUC
+static_assert(sizeof(BASEPTR) == sizeof(int*) * 2, "GNU pointer-to-member function storage changed");
+#endif
 
 static int gSizes[FIELD_TYPECOUNT] =
 {
@@ -16,11 +22,7 @@ static int gSizes[FIELD_TYPECOUNT] =
 	sizeof(float) * 3,	// FIELD_POSITION_VECTOR
 	sizeof(int*),		// FIELD_POINTER
 	sizeof(int),		// FIELD_INTEGER
-#ifdef GNUC
-	sizeof(int*) * 2,		// FIELD_FUNCTION
-#else
-	sizeof(int*),		// FIELD_FUNCTION	
-#endif
+	sizeof(BASEPTR),	// FIELD_FUNCTION
 	sizeof(int),		// FIELD_BOOLEAN
 	sizeof(short),		// FIELD_SHORT
 	sizeof(char),		// FIELD_CHARACTER
@@ -327,7 +329,7 @@ void CSave::WriteFunction(const char* pname, void** data, int count)
 {
 	const char* functionName;
 
-	functionName = NAME_FOR_FUNCTION((uint32)*data);
+	functionName = NAME_FOR_FUNCTION(reinterpret_cast<func_t>(*data));
 	if (functionName)
 		BufferField(pname, strlen(functionName) + 1, functionName);
 	else
@@ -658,10 +660,12 @@ int CRestore::ReadField(void* pBaseData, TYPEDESCRIPTION* pFields, int fieldCoun
 						*((int*)pOutputData) = *(int*)pInputData;
 						break;
 					case FIELD_FUNCTION:
-						if (strlen((char*)pInputData) == 0)
-							*((int*)pOutputData) = 0;
-						else
-							*((int*)pOutputData) = FUNCTION_FROM_NAME((char*)pInputData);
+						memset(pOutputData, 0, gSizes[FIELD_FUNCTION]);
+						if (strlen((char*)pInputData) != 0)
+						{
+							const func_t function = FUNCTION_FROM_NAME((char*)pInputData);
+							memcpy(pOutputData, &function, sizeof(function));
+						}
 						break;
 
 					default:

@@ -824,6 +824,14 @@ endif()
 
 if(UNIX)
 	set(OPT_FLAG "-O2")
+	# The dedicated server DLL remains 32-bit on x86, but -m32 is not
+	# supported by native non-x86 targets such as aarch64.
+	string(TOLOWER "${CMAKE_SYSTEM_PROCESSOR}" SERVER_TARGET_PROCESSOR)
+	set(SERVER_ARCH_FLAGS "")
+	if(SERVER_TARGET_PROCESSOR MATCHES "^(x86_64|amd64|i[3-6]86|x86)$")
+		set(SERVER_ARCH_FLAGS "-m32 ")
+	endif()
+
 	if (ASAN)
 		set(ASAN_CFLAGS "-fsanitize=address -fno-omit-frame-pointer")
 		set(ASAN_LFLAGS "-fsanitize=address")
@@ -842,8 +850,8 @@ if(UNIX)
 
 	set_target_properties(${SERVER_DLL_NAME} PROPERTIES
 		PREFIX ""
-		COMPILE_FLAGS "-m32 -g -fno-strict-aliasing -Wall -Wextra -Wpedantic -Werror=return-type -Wno-invalid-offsetof -Wno-class-memaccess -Wno-unused-parameter -fno-omit-frame-pointer ${OPT_FLAG} ${ASAN_CFLAGS}"
-		LINK_FLAGS "-m32 -g ${ASAN_LFLAGS}"
+		COMPILE_FLAGS "${SERVER_ARCH_FLAGS}-g -fno-strict-aliasing -Wall -Wextra -Wpedantic -Werror=return-type -Wno-invalid-offsetof -Wno-class-memaccess -Wno-unused-parameter -fno-omit-frame-pointer ${OPT_FLAG} ${ASAN_CFLAGS}"
+		LINK_FLAGS "${SERVER_ARCH_FLAGS}-g ${ASAN_LFLAGS}"
 	)
 	
 elseif(MSVC)

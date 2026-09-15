@@ -938,7 +938,12 @@ enum AngleSpriteMode {
 };
 
 
+// Function indices carry native function addresses on LP64 Xash builds.
+#if defined(__LP64__) || defined(_LP64)
+typedef unsigned long	func_t;
+#else
 typedef unsigned int	func_t;
+#endif
 typedef unsigned int	string_t;
 
 typedef unsigned char 		byte;
@@ -1002,4 +1007,3 @@ typedef struct
 } trace_t;
 
 #endif
-
